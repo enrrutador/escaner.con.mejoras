@@ -1,0 +1,87 @@
+<!-- 
+  © [2024] [SYSMARKETHM]. Todos los derechos reservados.
+  
+  Este archivo es parte de [M-Escaner], propiedad de [SYSMARKETHM].
+  
+  El uso, distribución o reproducción no autorizados de este material están estrictamente prohibidos.
+  Para obtener permiso para usar cualquier parte de este código, por favor contacta a [https://sysmarket-hm.web.app/].
+-->
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>M-Scanner 2.0</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="login-container" class="login-container">
+        <h2>Iniciar Sesión</h2>
+        <form id="loginForm">
+            <input type="email" id="email" placeholder="Correo Electrónico" required>
+            <input type="password" id="password" placeholder="Contraseña" required>
+            <button type="submit" class="action-button">Iniciar Sesión</button>
+            <div id="login-error" class="error-message"></div>
+        </form>
+    </div>
+
+    <div id="app-container" class="container" style="display: none;">
+        <header>
+            <h1>M-Scanner 2.0</h1>
+        </header>
+        
+        <div class="scanner-section">
+            <button id="scan-button" class="action-button">Escanear Código de Barras</button>
+            <button id="search-button" class="action-button">Buscar Producto</button>
+            <input type="text" id="barcode" placeholder="Código de Barras">
+        </div>
+        
+        <div class="form-section">
+            <input type="text" id="description" placeholder="Descripción del Producto">
+            <input type="number" id="stock" placeholder="Stock">
+            <input type="number" id="price" placeholder="Precio de Venta">
+            <input type="file" id="fileInput" accept=".xlsx, .xls" style="display: none;" />
+        </div>
+        
+        <div class="action-section">
+            <button id="save-button" class="action-button">Guardar</button>
+            <button id="clear-button" class="action-button">Borrar</button>
+            <button id="export-button" class="action-button">Exportar a Excel</button>
+            <button id="import-button" class="action-button">Importar</button>
+            <button id="low-stock-button" class="action-button low-stock-button">Ver Productos con Stock Bajo</button>
+        </div>
+        
+        <div id="product-image-container" class="image-section">
+            <img id="product-image" src="" alt="Imagen del Producto" style="display: none;">
+        </div>
+        
+        <div id="scanner-container" class="scanner-overlay" style="display: none;">
+            <video id="video" autoplay></video>
+            <div id="viewfinder"></div>
+        </div>
+        
+        <div id="search-results" class="results-section" style="display: none;">
+            <h2>Resultados de la Búsqueda</h2>
+            <ul id="results-list"></ul>
+        </div>
+        
+        <div id="low-stock-results" class="results-section low-stock-results" style="display: none;">
+            <h2>Productos con Stock Bajo</h2>
+            <ul id="low-stock-list"></ul>
+        </div>
+    </div>
+
+    <!-- Incluye la biblioteca XLSX -->
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+    
+    <!-- Tu configuración de Firebase -->
+    <script type="module" src="firebaseConfig.js"></script>
+    
+    <!-- Tu script principal -->
+    <script type="module" src="script.js"></script>
+</body>
+</html>
+

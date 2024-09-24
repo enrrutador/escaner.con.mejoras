@@ -1,0 +1,165 @@
+/*
+  © [2024] [SYSMARKETHM]. Todos los derechos reservados.
+  
+  Este archivo es parte de [M-Escaner], propiedad de [SYSMARKETHM].
+  
+  El uso, distribución o reproducción no autorizados de este material están estrictamente prohibidos.
+  Para obtener permiso para usar cualquier parte de este código, por favor contacta a [https://sysmarket-hm.web.app/].
+*/
+:root {
+    --primary-color: #0288D1;
+    --secondary-color: #0277BD;
+    --accent-color: #FF5722;
+    --text-color: #FFFFFF;
+    --background-color: rgba(236, 239, 241, 0.8); /* Fondo más transparente */
+}
+
+body, html {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+    background-image: url('https://enrrutador.github.io/M-Escaner/image/1.jpg');
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    background-position: center;
+    color: var(--text-color);
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.container, .login-container {
+    width: 90%;
+    max-width: 400px;
+    margin: auto;
+    padding: 20px;
+    text-align: center;
+    background-color: var(--background-color); /* Fondo semitransparente */
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+header h1 {
+    font-size: 1.5em;
+    margin-bottom: 20px;
+    color: var(--primary-color);
+}
+
+.scanner-section, .form-section, .action-section {
+    margin-bottom: 20px;
+}
+
+.action-button {
+    background-color: var(--primary-color);
+    border: none;
+    color: white;
+    padding: 12px 15px;
+    margin: 5px 0;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+    width: 100%;
+    font-size: 1em;
+}
+
+.action-button:hover {
+    background-color: var(--accent-color);
+}
+
+input {
+    width: calc(100% - 20px);
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 5px;
+    border: 1px solid var(--secondary-color);
+    font-size: 1em;
+}
+
+.image-section img {
+    max-width: 100%;
+    margin-top: 20px;
+    border-radius: 5px;
+}
+
+.scanner-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+#video {
+    width: 80%;
+    border: 2px solid var(--primary-color);
+    border-radius: 10px;
+}
+
+#viewfinder {
+    position: absolute;
+    width: 60%;
+    height: 40%;
+    border: 2px solid var(--accent-color);
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    border-radius: 10px;
+}
+
+.results-section {
+    margin-top: 20px;
+    text-align: left;
+}
+
+.results-section h2 {
+    color: var(--primary-color);
+}
+
+.results-section ul {
+    list-style-type: none;
+    padding-left: 0;
+}
+
+.results-section li {
+    background-color: var(--background-color);
+    padding: 10px;
+    border-bottom: 1px solid var(--secondary-color);
+    border-radius: 5px;
+    margin-bottom: 5px;
+}
+
+.results-section li:hover {
+    background-color: var(--accent-color);
+    color: var(--text-color);
+    cursor: pointer;
+}
+
+.low-stock-button {
+    background-color: red;
+}
+
+.low-stock-results ul {
+    color: #000;
+}
+
+.low-stock-results li {
+    color: #000;
+}
+
+.login-container h2 {
+    color: var(--primary-color);
+    margin-bottom: 20px;
+}
+
+.error-message {
+    color: red;
+    font-size: 0.9em;
+    margin-top: 10px;
+}
