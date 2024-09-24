@@ -85,7 +85,6 @@ onAuthStateChanged(auth, (user) => {
     }
 });
 
-// ... (el resto del código sigue igual)
 // Clase para la base de datos de productos
 class ProductDatabase {
     constructor() {
@@ -187,7 +186,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     const barcodeInput = document.getElementById('barcode');
     const descriptionInput = document.getElementById('description');
     const stockInput = document.getElementById('stock');
-    const priceInput = document.getElementById('price');
+    const minStockInput = document.getElementById('min-stock');
+    const purchasePriceInput = document.getElementById('purchase-price');
+    const salePriceInput = document.getElementById('sale-price');
     const productImage = document.getElementById('product-image');
     const scannerContainer = document.getElementById('scanner-container');
     const video = document.getElementById('video');
@@ -274,7 +275,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                     barcode: data.product.code,
                     description: data.product.product_name || 'Sin nombre',
                     stock: 0,
-                    price: 0,
+                    minStock: 0,
+                    purchasePrice: 0,
+                    salePrice: 0,
                     image: data.product.image_url || ''
                 };
 
@@ -291,7 +294,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         barcodeInput.value = product.barcode || '';
         descriptionInput.value = product.description || '';
         stockInput.value = product.stock || '';
-        priceInput.value = product.price || '';
+        minStockInput.value = product.minStock || '';
+        purchasePriceInput.value = product.purchasePrice || '';
+        salePriceInput.value = product.salePrice || '';
         if (product.image) {
             productImage.src = product.image;
             productImage.style.display = 'block';
@@ -327,7 +332,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             barcode: barcodeInput.value.trim(),
             description: descriptionInput.value.trim(),
             stock: parseInt(stockInput.value) || 0,
-            price: parseFloat(priceInput.value) || 0,
+            minStock: parseInt(minStockInput.value) || 0,
+            purchasePrice: parseFloat(purchasePriceInput.value) || 0,
+            salePrice: parseFloat(salePriceInput.value) || 0,
             image: productImage.src || ''
         };
 
@@ -342,7 +349,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         barcodeInput.value = '';
         descriptionInput.value = '';
         stockInput.value = '';
-        priceInput.value = '';
+        minStockInput.value = '';
+        purchasePriceInput.value = '';
+        salePriceInput.value = '';
         productImage.src = '';
         productImage.style.display = 'none';
     }
@@ -355,7 +364,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         lowStockList.innerHTML = '';
         const allProducts = await db.getAllProducts();
-        const lowStockProducts = allProducts.filter(product => product.stock <= 5);
+        const lowStockProducts = allProducts.filter(product => product.stock <= product.minStock);
 
         if (lowStockProducts.length > 0) {
             lowStockProducts.forEach(product => {
@@ -401,7 +410,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                     const barcodeKey = findKey(['Código de barras', 'Codigo de Barras', 'codigo de barras', 'barcode']);
                     const descriptionKey = findKey(['Descripción', 'Descripcion', 'descripcion', 'description']);
                     const stockKey = findKey(['Stock', 'stock']);
-                    const priceKey = findKey(['Precio Costo', 'Precio', 'precio', 'price']);
+                    const minStockKey = findKey(['Stock Mínimo', 'Stock minimo', 'stock minimo']);
+                    const purchasePriceKey = findKey(['Precio de Compra', 'precio de compra', 'purchase price']);
+                    const salePriceKey = findKey(['Precio de Venta', 'precio de venta', 'sale price']);
                     const imageKey = findKey(['Imagen', 'imagen', 'image']);
 
                     if (!barcodeKey) {
@@ -414,13 +425,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                             barcode: product[barcodeKey].toString(),
                             description: product[descriptionKey] || '',
                             stock: parseInt(product[stockKey] || '0'),
-                            price: parseFloat(product[priceKey] || '0'),
+                            minStock: parseInt(product[minStockKey] || '0'),
+                            purchasePrice: parseFloat(product[purchasePriceKey] || '0'),
+                            salePrice: parseFloat(product[salePriceKey] || '0'),
                             image: product[imageKey] || ''
                         };
 
                         console.log('Intentando agregar producto:', newProduct);
                         await db.addProduct(newProduct);
-                        importedCountimportedCount++;
+                        importedCount++;
                         console.log('Producto agregado con éxito');
                     } catch (error) {
                         console.error('Error al agregar producto:', product, error);
@@ -449,7 +462,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             'Código de Barras': product.barcode,
             'Descripción': product.description,
             'Stock': product.stock,
-            'Precio': product.price
+            'Stock Mínimo': product.minStock,
+            'Precio de Compra': product.purchasePrice,
+            'Precio de Venta': product.salePrice
         })));
         
         const workbook = XLSX.utils.book_new();
