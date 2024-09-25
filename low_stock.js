@@ -1,5 +1,45 @@
+// Clase ProductDatabase para manejar IndexedDB
+class ProductDatabase {
+    constructor() {
+        this.dbName = 'MScannerDB';
+        this.dbVersion = 1;
+        this.storeName = 'products';
+        this.db = null;
+    }
+
+    async init() {
+        return new Promise((resolve, reject) => {
+            const request = indexedDB.open(this.dbName, this.dbVersion);
+
+            request.onerror = (event) => reject('Error opening database:', event.target.error);
+
+            request.onsuccess = (event) => {
+                this.db = event.target.result;
+                resolve();
+            };
+
+            request.onupgradeneeded = (event) => {
+                const db = event.target.result;
+                const store = db.createObjectStore(this.storeName, { keyPath: 'barcode' });
+                store.createIndex('description', 'description', { unique: false });
+            };
+        });
+    }
+
+    async getAllProducts() {
+        return new Promise((resolve, reject) => {
+            const transaction = this.db.transaction([this.storeName], 'readonly');
+            const request = transaction.objectStore(this.storeName).getAll();
+
+            request.onsuccess = (event) => resolve(event.target.result);
+            request.onerror = (event) => reject('Error getting all products:', event.target.error);
+        });
+    }
+}
+
+// Código para manejar los productos con stock bajo
 document.addEventListener('DOMContentLoaded', async () => {
-    const db = new ProductDatabase(); // Asegúrate de que la clase ProductDatabase esté disponible
+    const db = new ProductDatabase();
     await db.init(); // Inicializar la base de datos
 
     const lowStockList = document.getElementById('low-stock-list'); // Contenedor donde se mostrarán los productos
