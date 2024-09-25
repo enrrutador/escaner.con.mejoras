@@ -68,15 +68,57 @@ header h1 {
     background-color: var(--accent-color);
 }
 
-input {
-    width: calc(100% - 20px);
+/* Estilos individualizados para los campos de entrada */
+
+/* Campo de Descripción del Producto */
+#description {
+    width: 100%; /* Ocupa todo el ancho disponible */
+    padding: 12px; /* Aumenta el espacio interno */
+    margin: 10px auto; /* Centrado horizontal */
+    display: block;
+    font-size: 1.2em; /* Aumenta el tamaño del texto */
+}
+
+/* Campo de Stock Actual */
+#stock {
+    width: 45%; /* Ancho del 45% del contenedor */
+    padding: 8px;
+    margin: 5px;
+    float: left; /* Alineado a la izquierda */
+}
+
+/* Campo de Stock Mínimo */
+#min-stock {
+    width: 45%; /* Ancho del 45% del contenedor */
+    padding: 8px;
+    margin: 5px;
+    float: right; /* Alineado a la derecha */
+}
+
+/* Campo de Precio de Compra */
+#purchase-price {
+    width: 60%; /* Centrado y más grande */
     padding: 10px;
-    margin: 10px 0;
+    margin: 10px auto;
+    display: block;
+}
+
+/* Campo de Precio de Venta */
+#sale-price {
+    width: 60%; /* Centrado y más grande */
+    padding: 10px;
+    margin: 10px auto;
+    display: block;
+}
+
+/* Otros estilos generales para inputs */
+input {
     border-radius: 5px;
     border: 1px solid var(--secondary-color);
     font-size: 1em;
 }
 
+/* Estilos para la imagen del producto */
 .image-section img {
     max-width: 100%;
     margin-top: 20px;
