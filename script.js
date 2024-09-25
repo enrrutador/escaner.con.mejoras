@@ -10,27 +10,88 @@ import { auth, database } from './firebaseConfig.js';
 import { signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 import { ref, set, get } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-database.js";
 
-// Función para obtener o generar un ID de dispositivo único
-function getDeviceId() {
-    let deviceId = localStorage.getItem('deviceId');
-    if (!deviceId) {
-        deviceId = crypto.randomUUID();
-        localStorage.setItem('deviceId', deviceId);
+// Clase para manejar la base de datos local IndexedDB
+class ProductDatabase {
+    constructor() {
+        this.dbName = 'MScannerDB';
+        this.dbVersion = 1;
+        this.storeName = 'products';
+        this.db = null;
     }
-    return deviceId;
+
+    async init() {
+        return new Promise((resolve, reject) => {
+            const request = indexedDB.open(this.dbName, this.dbVersion);
+
+            request.onerror = (event) => reject('Error opening database:', event.target.error);
+
+            request.onsuccess = (event) => {
+                this.db = event.target.result;
+                resolve();
+            };
+
+            request.onupgradeneeded = (event) => {
+                const db = event.target.result;
+                const store = db.createObjectStore(this.storeName, { keyPath: 'barcode' });
+                store.createIndex('description', 'description', { unique: false });
+            };
+        });
+    }
+
+    async addProduct(product) {
+        return new Promise((resolve, reject) => {
+            const transaction = this.db.transaction([this.storeName], 'readwrite');
+            const store = transaction.objectStore(this.storeName);
+            const request = store.put(product);
+
+            request.onsuccess = () => resolve();
+            request.onerror = (event) => reject('Error adding product:', event.target.error);
+        });
+    }
+
+    async getAllProducts() {
+        return new Promise((resolve, reject) => {
+            const transaction = this.db.transaction([this.storeName], 'readonly');
+            const request = transaction.objectStore(this.storeName).getAll();
+
+            request.onsuccess = (event) => resolve(event.target.result);
+            request.onerror = (event) => reject('Error getting all products:', event.target.error);
+        });
+    }
+
+    async searchProducts(query) {
+        return new Promise((resolve, reject) => {
+            const transaction = this.db.transaction([this.storeName], 'readonly');
+            const store = transaction.objectStore(this.storeName);
+            const index = store.index('description');
+            const request = index.openCursor();
+            const results = [];
+
+            request.onsuccess = (event) => {
+                const cursor = event.target.result;
+                if (cursor) {
+                    const normalizedDescription = normalizeText(cursor.value.description);
+                    const normalizedQuery = normalizeText(query);
+                    if (normalizedDescription.includes(normalizedQuery)) {
+                        results.push(cursor.value);
+                    }
+                    cursor.continue();
+                } else {
+                    resolve(results);
+                }
+            };
+
+            request.onerror = (event) => reject('Error searching products:', event.target.error);
+        });
+    }
 }
 
-// Función para vincular el ID del dispositivo al usuario en Realtime Database
-async function linkDeviceToUser(userId, deviceId) {
-    const userRef = ref(database, `users/${userId}`);
-    await set(userRef, { deviceId, lastLogin: new Date().toISOString() });
-}
-
-// Función para obtener el ID del dispositivo vinculado desde Realtime Database
-async function getUserDevice(userId) {
-    const userRef = ref(database, `users/${userId}`);
-    const snapshot = await get(userRef);
-    return snapshot.exists() ? snapshot.val() : null;
+// Función para normalizar texto
+function normalizeText(text) {
+    return text
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '');
 }
 
 // Manejar el formulario de inicio de sesión
@@ -85,98 +146,27 @@ onAuthStateChanged(auth, (user) => {
     }
 });
 
-// Clase para la base de datos de productos
-class ProductDatabase {
-    constructor() {
-        this.dbName = 'MScannerDB';
-        this.dbVersion = 1;
-        this.storeName = 'products';
-        this.db = null;
+// Función para obtener o generar un ID de dispositivo único
+function getDeviceId() {
+    let deviceId = localStorage.getItem('deviceId');
+    if (!deviceId) {
+        deviceId = crypto.randomUUID();
+        localStorage.setItem('deviceId', deviceId);
     }
-
-    async init() {
-        return new Promise((resolve, reject) => {
-            const request = indexedDB.open(this.dbName, this.dbVersion);
-
-            request.onerror = (event) => reject('Error opening database:', event.target.error);
-
-            request.onsuccess = (event) => {
-                this.db = event.target.result;
-                resolve();
-            };
-
-            request.onupgradeneeded = (event) => {
-                const db = event.target.result;
-                const store = db.createObjectStore(this.storeName, { keyPath: 'barcode' });
-                store.createIndex('description', 'description', { unique: false });
-            };
-        });
-    }
-
-    async addProduct(product) {
-        return new Promise((resolve, reject) => {
-            const transaction = this.db.transaction([this.storeName], 'readwrite');
-            const store = transaction.objectStore(this.storeName);
-            const request = store.put(product);
-
-            request.onsuccess = () => resolve();
-            request.onerror = (event) => reject('Error adding product:', event.target.error);
-        });
-    }
-
-    async getProduct(barcode) {
-        return new Promise((resolve, reject) => {
-            const transaction = this.db.transaction([this.storeName], 'readonly');
-            const request = transaction.objectStore(this.storeName).get(barcode);
-
-            request.onsuccess = (event) => resolve(event.target.result);
-            request.onerror = (event) => reject('Error getting product:', event.target.error);
-        });
-    }
-
-    async getAllProducts() {
-        return new Promise((resolve, reject) => {
-            const transaction = this.db.transaction([this.storeName], 'readonly');
-            const request = transaction.objectStore(this.storeName).getAll();
-
-            request.onsuccess = (event) => resolve(event.target.result);
-            request.onerror = (event) => reject('Error getting all products:', event.target.error);
-        });
-    }
-
-    async searchProducts(query) {
-        return new Promise((resolve, reject) => {
-            const transaction = this.db.transaction([this.storeName], 'readonly');
-            const store = transaction.objectStore(this.storeName);
-            const index = store.index('description');
-            const request = index.openCursor();
-            const results = [];
-
-            request.onsuccess = (event) => {
-                const cursor = event.target.result;
-                if (cursor) {
-                    const normalizedDescription = normalizeText(cursor.value.description);
-                    const normalizedQuery = normalizeText(query);
-                    if (normalizedDescription.includes(normalizedQuery)) {
-                        results.push(cursor.value);
-                    }
-                    cursor.continue();
-                } else {
-                    resolve(results);
-                }
-            };
-
-            request.onerror = (event) => reject('Error searching products:', event.target.error);
-        });
-    }
+    return deviceId;
 }
 
-// Función para normalizar texto
-function normalizeText(text) {
-    return text
-        .toLowerCase()
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '');
+// Función para vincular el ID del dispositivo al usuario en Realtime Database
+async function linkDeviceToUser(userId, deviceId) {
+    const userRef = ref(database, `users/${userId}`);
+    await set(userRef, { deviceId, lastLogin: new Date().toISOString() });
+}
+
+// Función para obtener el ID del dispositivo vinculado desde Realtime Database
+async function getUserDevice(userId) {
+    const userRef = ref(database, `users/${userId}`);
+    const snapshot = await get(userRef);
+    return snapshot.exists() ? snapshot.val() : null;
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -446,44 +436,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             'Precio de Compra': product.purchasePrice,
             'Precio de Venta': product.salePrice
         })));
-        document.addEventListener('DOMContentLoaded', async () => {
-    const db = new ProductDatabase(); // Asegúrate de que la clase ProductDatabase esté disponible
-    await db.init(); // Inicializar la base de datos
-
-    const lowStockList = document.getElementById('low-stock-list'); // Contenedor donde se mostrarán los productos
-
-    try {
-        // Obtener todos los productos y filtrar aquellos que tienen stock actual menor o igual que el stock mínimo
-        const allProducts = await db.getAllProducts();
-
-        console.log("Todos los productos cargados:", allProducts); // Verifica si los productos están cargando correctamente
-
-        const lowStockProducts = allProducts.filter(product => product.stock <= product.minStock);
-
-        console.log("Productos con stock bajo:", lowStockProducts); // Verifica si los productos con stock bajo se están filtrando
-
-        // Mostrar los productos en la lista
-        if (lowStockProducts.length > 0) {
-            lowStockProducts.forEach(product => {
-                const li = document.createElement('li');
-                li.textContent = `${product.description} (Código: ${product.barcode}) - Stock Actual: ${product.stock}, Stock Mínimo: ${product.minStock}`;
-                lowStockList.appendChild(li); // Agregar producto a la lista
-            });
-        } else {
-            lowStockList.innerHTML = '<li>No hay productos con stock bajo.</li>'; // Mostrar mensaje si no hay productos
-        }
-    } catch (error) {
-        console.error('Error al cargar productos con stock bajo:', error);
-        lowStockList.innerHTML = '<li>Error al cargar los productos.</li>';
-    }
-
-    // Botón para volver a la página del escáner
-    const backButton = document.getElementById('back-button');
-    backButton.addEventListener('click', () => {
-        window.location.href = 'index.html'; // Redirige a la página principal del escáner
-    });
-});
-
+        
         const workbook = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(workbook, worksheet, "Productos");
         
