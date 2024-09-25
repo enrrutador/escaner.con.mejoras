@@ -5,6 +5,30 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Productos con Stock Bajo</title>
     <link rel="stylesheet" href="styles.css">
+    <style>
+        /* Cambiar el color de las letras, números y símbolos a negro */
+        #low-stock-list li {
+            color: #000; /* Color negro */
+            font-size: 1em;
+        }
+
+        /* Botón de flecha para volver al escáner */
+        .back-button {
+            background-color: var(--primary-color);
+            border: none;
+            color: white;
+            font-size: 1.5em;
+            padding: 10px;
+            margin: 10px;
+            cursor: pointer;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .back-button:hover {
+            background-color: var(--accent-color);
+        }
+    </style>
 </head>
 <body>
     <div class="container">
