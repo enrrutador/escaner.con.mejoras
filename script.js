@@ -193,8 +193,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     const scannerContainer = document.getElementById('scanner-container');
     const video = document.getElementById('video');
     const lowStockButton = document.getElementById('low-stock-button');
-    const lowStockResults = document.getElementById('low-stock-results');
-    const lowStockList = document.getElementById('low-stock-list');
     const fileInput = document.getElementById('fileInput');
     let barcodeDetector;
     let productNotFoundAlertShown = false;
@@ -356,27 +354,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         productImage.style.display = 'none';
     }
 
-    lowStockButton.addEventListener('click', async () => {
-        if (lowStockResults.style.display === 'block') {
-            lowStockResults.style.display = 'none';
-            return;
-        }
-
-        lowStockList.innerHTML = '';
-        const allProducts = await db.getAllProducts();
-        const lowStockProducts = allProducts.filter(product => product.stock <= product.minStock);
-
-        if (lowStockProducts.length > 0) {
-            lowStockProducts.forEach(product => {
-                const li = document.createElement('li');
-                li.textContent = `${product.description} (Código: ${product.barcode}) - Stock: ${product.stock}`;
-                lowStockList.appendChild(li);
-            });
-        } else {
-            lowStockList.innerHTML = '<li>No hay productos con stock bajo.</li>';
-        }
-
-        lowStockResults.style.display = 'block';
+    // Modificar el botón para redirigir a la página de "low_stock.html"
+    lowStockButton.addEventListener('click', () => {
+        window.location.href = 'low_stock.html'; // Redirige a la página de productos con stock bajo
     });
 
     document.getElementById('import-button').addEventListener('click', () => {
