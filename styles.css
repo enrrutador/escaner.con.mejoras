@@ -72,7 +72,7 @@ header h1 {
 
 /* Campo de Código de Barras */
 #barcode {
-    width: 80%; /* Ajusta el tamaño del campo */
+    width: 93%; /* Ajusta el tamaño del campo */
     padding: 10px;
     margin: 10px auto; /* Centrado horizontal */
     display: block;
@@ -81,7 +81,7 @@ header h1 {
 
 /* Campo de Descripción del Producto */
 #description {
-    width: 100%; /* Ocupa todo el ancho disponible */
+    width: 93%; /* Ocupa todo el ancho disponible */
     padding: 12px; /* Aumenta el espacio interno */
     margin: 10px auto; /* Centrado horizontal */
     display: block;
@@ -90,39 +90,43 @@ header h1 {
 
 /* Campo de Stock Actual */
 #stock {
-    width: 45%; /* Ancho del 45% del contenedor */
-    padding: 8px;
-    margin: 5px;
+    width: 40%; /* Ancho del 45% del contenedor */
+    padding: 12px;
+    margin: 1px; auto;
+    display: block;
     float: left; /* Alineado a la izquierda */
 }
 
 /* Campo de Stock Mínimo */
 #min-stock {
-    width: 45%; /* Ancho del 45% del contenedor */
-    padding: 8px;
-    margin: 5px;
+    width: 40%; /* Ancho del 45% del contenedor */
+    padding: 12px;
+    margin: 1px; auto;
     float: right; /* Alineado a la derecha */
+     display: block;
 }
 
 /* Campo de Precio de Compra */
 #purchase-price {
-    width: 60%; /* Centrado y más grande */
-    padding: 10px;
+    width: 40%; /* Centrado y más grande */
+    padding: 12px;
     margin: 10px auto;
     display: block;
+    float: left;
 }
 
 /* Campo de Precio de Venta */
 #sale-price {
-    width: 60%; /* Centrado y más grande */
-    padding: 10px;
+    width: 40%; /* Centrado y más grande */
+    padding: 12px;
     margin: 10px auto;
     display: block;
+    float: right; /* Alineado a la derecha */
 }
 
 /* Otros estilos generales para inputs */
 input {
-    border-radius: 5px;
+    border-radius: 9px;
     border: 1px solid var(--secondary-color);
     font-size: 1em;
 }
