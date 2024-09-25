@@ -70,6 +70,15 @@ header h1 {
 
 /* Estilos individualizados para los campos de entrada */
 
+/* Campo de Código de Barras */
+#barcode {
+    width: 80%; /* Ajusta el tamaño del campo */
+    padding: 10px;
+    margin: 10px auto; /* Centrado horizontal */
+    display: block;
+    font-size: 1.1em; /* Tamaño de la fuente ajustado */
+}
+
 /* Campo de Descripción del Producto */
 #description {
     width: 100%; /* Ocupa todo el ancho disponible */
