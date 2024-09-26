@@ -30,22 +30,25 @@
         <header>
             <h1>M-Scanner 2.0</h1>
         </header>
-        
+
+        <!-- Sección de escaneo -->
         <div class="scanner-section">
             <button id="scan-button" class="action-button">Escanear Código de Barras</button>
             <button id="search-button" class="action-button">Buscar Producto</button>
             <input type="text" id="barcode" placeholder="Código de Barras">
         </div>
-        
+
+        <!-- Formulario de entrada de datos -->
         <div class="form-section">
-            <input type="text" id="description" placeholder="Descripción del Producto">
+            <input type="text" id="description" placeholder="Descripción del Producto" list="suggestions">
+            <datalist id="suggestions"></datalist>
             <input type="number" id="stock" placeholder="Stock Actual">
             <input type="number" id="min-stock" placeholder="Stock Mínimo">
             <input type="number" id="purchase-price" placeholder="Precio de Compra">
             <input type="number" id="sale-price" placeholder="Precio de Venta">
             <input type="file" id="fileInput" accept=".xlsx, .xls" style="display: none;" />
         </div>
-        
+
         <div class="action-section">
             <button id="save-button" class="action-button">Guardar</button>
             <button id="clear-button" class="action-button">Borrar</button>
@@ -53,36 +56,28 @@
             <button id="import-button" class="action-button">Importar</button>
             <button id="low-stock-button" class="action-button low-stock-button">Ver Productos con Stock Bajo</button>
         </div>
-        
-        <div id="product-image-container" class="image-section">
-            <img id="product-image" src="" alt="Imagen del Producto" style="display: none;">
-        </div>
-        
+
+        <!-- Video del escáner -->
         <div id="scanner-container" class="scanner-overlay" style="display: none;">
             <video id="video" autoplay></video>
-            <div id="viewfinder"></div>
         </div>
-        
-        <div id="search-results" class="results-section" style="display: none;">
-            <h2>Resultados de la Búsqueda</h2>
-            <ul id="results-list"></ul>
-        </div>
-        
+
         <div id="low-stock-results" class="results-section low-stock-results" style="display: none;">
             <h2>Productos con Stock Bajo</h2>
             <ul id="low-stock-list"></ul>
         </div>
     </div>
 
+    <!-- Incluir Fuse.js para búsqueda difusa -->
+    <script src="https://cdn.jsdelivr.net/npm/fuse.js/dist/fuse.js"></script>
+
     <!-- Incluye la biblioteca XLSX -->
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
-    
     <!-- Tu configuración de Firebase -->
     <script type="module" src="firebaseConfig.js"></script>
     
     <!-- Tu script principal -->
-    <script type="module" src="script.js"></script>
+    <script type="module" src="nuevo2.js"></script>
 </body>
 </html>
