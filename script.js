@@ -201,6 +201,38 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const cache = new Map();
 
+    // Implementación de búsqueda difusa con Fuse.js y autocompletado
+    descriptionInput.addEventListener('input', async (e) => {
+        const query = e.target.value.trim();
+        const suggestions = document.getElementById('suggestions');
+        suggestions.innerHTML = ''; // Limpiar las sugerencias previas
+
+        if (query) {
+            const allProducts = await db.getAllProducts(); // Obtener todos los productos
+            const fuse = new Fuse(allProducts, { keys: ['description'], threshold: 0.4 });
+            const results = fuse.search(query); // Realiza la búsqueda difusa
+
+            // Agregar las sugerencias al datalist
+            results.forEach(result => {
+                const option = document.createElement('option');
+                option.value = result.item.description;
+                suggestions.appendChild(option);
+            });
+        }
+    });
+
+    // Manejar la selección del autocompletado
+    descriptionInput.addEventListener('change', async (e) => {
+        const selectedDescription = e.target.value.trim();
+        const allProducts = await db.getAllProducts();
+        const selectedProduct = allProducts.find(product => product.description === selectedDescription);
+        if (selectedProduct) {
+            fillForm(selectedProduct); // Llenar el formulario con el producto seleccionado
+        } else {
+            alert('Producto no encontrado.');
+        }
+    });
+
     async function startScanner() {
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
