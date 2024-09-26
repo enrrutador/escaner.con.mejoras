@@ -283,12 +283,11 @@ input {
     left: 50%; /* Centrado horizontalmente */
     transform: translate(-50%, -50%); /* Ajuste para centrar exactamente */
     background-color: var(--accent-color);
+    font-weight: bold; /* Texto en negrita */
+    text-align: center; /* Centrar el texto */
     color: var(--text-color);
     width: var(--toast-width); /* Ancho del contenedor basado en la variable */
     font-size: var(--toast-font-size); /* Tamaño de fuente basado en la variable */
-    font-family: var(--toast-font-family); /* Fuente basada en la variable */
-    font-weight: bold; /* Texto en negrita */
-    text-align: center; /* Centrar el texto */
     padding: var(--toast-padding); /* Espacio interno basado en la variable */
     border-radius: 5px;
     box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.1);
@@ -301,6 +300,5 @@ input {
 .toast.show {
     opacity: 1;
     visibility: visible;
-}
 
 
