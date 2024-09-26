@@ -16,7 +16,7 @@ function showToast(message) {
     toast.classList.add('show');
     setTimeout(() => {
         toast.classList.remove('show');
-    }, 3000); // El mensaje se muestra durante 3 segundos
+    }, 2500); // El mensaje se muestra durante 3 segundos
 }
 
 // Función para obtener o generar un ID de dispositivo único
@@ -67,7 +67,7 @@ loginForm.addEventListener('submit', async (e) => {
             if (userDoc.deviceId !== deviceId) {
                 // Si el dispositivo actual no coincide con el vinculado, denegar acceso
                 showToast('Acceso denegado. Esta cuenta está vinculada a otro dispositivo.');
-                return;  // Se detiene el acceso sin cerrar la sesión del dispositivo original
+                return;  // DETIENE EL ACCESO al nuevo dispositivo
             }
         } else {
             // Si es la primera vez que se inicia sesión, vincular el dispositivo
@@ -92,6 +92,7 @@ onAuthStateChanged(auth, (user) => {
         appContainer.style.display = 'none';
     }
 });
+
 
 // Clase para manejar la base de datos de productos
 class ProductDatabase {
