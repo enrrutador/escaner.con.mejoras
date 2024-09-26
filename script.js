@@ -1,8 +1,6 @@
 /*
   © [2024] [SYSMARKETHM]. Todos los derechos reservados.
-  
   Este archivo es parte de [M-Escaner], propiedad de [SYSMARKETHM].
-  
   El uso, distribución o reproducción no autorizados de este material están estrictamente prohibidos.
   Para obtener permiso para usar cualquier parte de este código, por favor contacta a [https://sysmarket-hm.web.app/].
 */
@@ -10,6 +8,16 @@
 import { auth, database } from './firebaseConfig.js';
 import { signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 import { ref, set, get } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-database.js";
+
+// Función para mostrar mensajes automáticos
+function showToast(message) {
+    const toast = document.getElementById('toast');
+    toast.textContent = message;
+    toast.classList.add('show');
+    setTimeout(() => {
+        toast.classList.remove('show');
+    }, 3000); // El mensaje se muestra durante 3 segundos
+}
 
 // Función para obtener o generar un ID de dispositivo único
 function getDeviceId() {
@@ -59,7 +67,7 @@ loginForm.addEventListener('submit', async (e) => {
             if (userDoc.deviceId !== deviceId) {
                 // Si el dispositivo actual no coincide con el vinculado, denegar acceso
                 await auth.signOut();
-                loginError.textContent = 'Acceso denegado. Esta cuenta está vinculada a otro dispositivo.';
+                showToast('Acceso denegado. Esta cuenta está vinculada a otro dispositivo.');
                 return;
             }
         } else {
@@ -72,7 +80,7 @@ loginForm.addEventListener('submit', async (e) => {
         appContainer.style.display = 'block';
     } catch (error) {
         console.error('Error de autenticación:', error.code, error.message);
-        loginError.textContent = 'Error al iniciar sesión. Verifica tu correo y contraseña.';
+        showToast('Error al iniciar sesión. Verifica tu correo y contraseña.');
     }
 });
 
@@ -229,7 +237,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (selectedProduct) {
             fillForm(selectedProduct); // Llenar el formulario con el producto seleccionado
         } else {
-            alert('Producto no encontrado.');
+            showToast('Producto no encontrado.');
         }
     });
 
@@ -241,7 +249,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             video.play();
             scan();
         } catch (error) {
-            alert('Error accediendo a la cámara. Asegúrate de que tu navegador tiene permiso para usar la cámara.');
+            showToast('Error accediendo a la cámara. Asegúrate de que tu navegador tiene permiso para usar la cámara.');
         }
     }
 
@@ -288,7 +296,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             productNotFoundAlertShown = false;
         } else {
             if (!productNotFoundAlertShown) {
-                alert('Producto no encontrado.');
+                showToast('Producto no encontrado.');
                 productNotFoundAlertShown = true;
             }
         }
@@ -336,10 +344,9 @@ function fillForm(product) {
     }
 }
 
-
     document.getElementById('scan-button').addEventListener('click', async () => {
         if (!('BarcodeDetector' in window)) {
-            alert('API de detección de códigos de barras no soportada en este navegador.');
+            showToast('API de detección de códigos de barras no soportada en este navegador.');
             return;
         }
 
@@ -355,7 +362,7 @@ function fillForm(product) {
         if (query) {
             searchProduct(query);
         } else {
-            alert('Por favor, introduce un código de barras o nombre de producto para buscar.');
+            showToast('Por favor, introduce un código de barras o nombre de producto para buscar.');
         }
     });
 
@@ -371,7 +378,7 @@ function fillForm(product) {
         };
 
         await db.addProduct(product);
-        alert('Producto guardado correctamente.');
+        showToast('Producto guardado correctamente.');
         clearForm();
     });
 
@@ -391,7 +398,6 @@ function clearForm() {
         productImage.style.display = 'none';
     }
 }
-
 
     // Modificar el botón para redirigir a la página de "low_stock.html"
     lowStockButton.addEventListener('click', () => {
@@ -460,16 +466,16 @@ function clearForm() {
                 }
 
                 console.log(`Importación completada. ${importedCount} productos importados correctamente.`);
-                alert(`Importación completada. ${importedCount} productos importados correctamente.`);
+                showToast(`Importación completada. ${importedCount} productos importados correctamente.`);
             } catch (error) {
                 console.error('Error durante la importación:', error);
-                alert('Error durante la importación. Por favor, revisa la consola para más detalles.');
+                showToast('Error durante la importación. Revisa la consola para más detalles.');
             }
         };
 
         reader.onerror = (error) => {
             console.error('Error al leer el archivo:', error);
-            alert('Error al leer el archivo. Por favor, intenta de nuevo.');
+            showToast('Error al leer el archivo. Por favor, intenta de nuevo.');
         };
 
         reader.readAsArrayBuffer(file);
@@ -490,5 +496,6 @@ function clearForm() {
         XLSX.utils.book_append_sheet(workbook, worksheet, "Productos");
         
         XLSX.writeFile(workbook, "productos_exportados.xlsx");
+        showToast('Exportación completada.');
     });
 });
