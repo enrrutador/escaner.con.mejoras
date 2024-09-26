@@ -68,15 +68,9 @@ loginForm.addEventListener('submit', async (e) => {
                 // Si el dispositivo actual no coincide con el vinculado, denegar acceso
                 showToast('Acceso denegado. Esta cuenta está vinculada a otro dispositivo.');
                 
-                // Forzar la detención del acceso:
-                // 1. Ocultar la interfaz de la aplicación
-                loginContainer.style.display = 'block';
-                appContainer.style.display = 'none';
-
-                // 2. Finalizar la sesión de usuario actual en este dispositivo
+                // Cerrar la sesión en este dispositivo
                 await auth.signOut();
-
-                return;  // Detener el flujo de ejecución para el nuevo dispositivo
+                return;  // Detener el flujo
             }
         } else {
             // Si es la primera vez que se inicia sesión, vincular el dispositivo
@@ -92,9 +86,22 @@ loginForm.addEventListener('submit', async (e) => {
     }
 });
 
-// Escuchar cambios en el estado de autenticación
-onAuthStateChanged(auth, (user) => {
+// Manejar el estado de autenticación después del inicio de sesión
+onAuthStateChanged(auth, async (user) => {
     if (user) {
+        const deviceId = getDeviceId();
+        const userDoc = await getUserDevice(user.uid);
+        
+        if (userDoc && userDoc.deviceId !== deviceId) {
+            // Si el dispositivo no coincide, cerrar sesión inmediatamente
+            showToast('Acceso denegado. Esta cuenta está vinculada a otro dispositivo.');
+            await auth.signOut();
+            loginContainer.style.display = 'block';
+            appContainer.style.display = 'none';
+            return;  // Detener cualquier acceso
+        }
+
+        // Si el dispositivo está autorizado, permitir el acceso
         loginContainer.style.display = 'none';
         appContainer.style.display = 'block';
     } else {
@@ -102,7 +109,6 @@ onAuthStateChanged(auth, (user) => {
         appContainer.style.display = 'none';
     }
 });
-
 
 
 // Clase para manejar la base de datos de productos
