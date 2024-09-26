@@ -418,82 +418,83 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.location.href = 'low_stock.html'; // Redirige a la página de productos con stock bajo
     });
 
-    document.getElementById('import-button').addEventListener('click', () => {
-        fileInput.click();
-    });
+document.getElementById('import-button').addEventListener('click', () => {
+    fileInput.click();
+});
 
-    fileInput.addEventListener('change', async (e) => {
-        const file = e.target.files[0];
-        const reader = new FileReader();
+fileInput.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    const reader = new FileReader();
 
-        reader.onload = async (e) => {
-            try {
-                const data = new Uint8Array(e.target.result);
-                const workbook = XLSX.read(data, {type: 'array'});
-                const firstSheetName = workbook.SheetNames[0];
-                const worksheet = workbook.Sheets[firstSheetName];
-                const products = XLSX.utils.sheet_to_json(worksheet);
+    reader.onload = async (e) => {
+        try {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, {type: 'array'});
+            const firstSheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[firstSheetName];
+            const products = XLSX.utils.sheet_to_json(worksheet);
 
-                console.log('Productos leídos del archivo:', products);
+            console.log('Productos leídos del archivo:', products);
 
-                let importedCount = 0;
-                for (let product of products) {
-                    console.log('Procesando producto:', product);
-                    
-                    // Función auxiliar para buscar la clave correcta
-                    const findKey = (possibleKeys) => {
-                        return possibleKeys.find(key => product.hasOwnProperty(key));
-                    };
+            let importedCount = 0;
+            for (let product of products) {
+                console.log('Procesando producto:', product);
+                
+                // Función auxiliar para buscar la clave correcta, mejorada para manejar diferentes nombres de columnas
+                const findKey = (possibleKeys) => {
+                    return possibleKeys.find(key => product.hasOwnProperty(key));
+                };
 
-                    // Buscar las claves correctas
-                    const barcodeKey = findKey(['Código de barras', 'Codigo de Barras', 'codigo de barras', 'barcode']);
-                    const descriptionKey = findKey(['Descripción', 'Descripcion', 'descripcion', 'description']);
-                    const stockKey = findKey(['Stock', 'stock']);
-                    const minStockKey = findKey(['Stock Mínimo', 'Stock minimo', 'stock minimo']);
-                    const purchasePriceKey = findKey(['Precio de Compra', 'precio de compra', 'purchase price']);
-                    const salePriceKey = findKey(['Precio de Venta', 'precio de venta', 'sale price']);
-                    const imageKey = findKey(['Imagen', 'imagen', 'image']);
+                // Buscar las claves correctas en el archivo
+                const barcodeKey = findKey(['Código de barras', 'Codigo de Barras', 'codigo de barras', 'barcode', 'Barcode']);
+                const descriptionKey = findKey(['Descripción', 'Descripcion', 'descripcion', 'description', 'Description']);
+                const stockKey = findKey(['Stock', 'stock']);
+                const minStockKey = findKey(['Stock Mínimo', 'Stock minimo', 'stock minimo', 'min stock']);
+                const purchasePriceKey = findKey(['Precio de Compra', 'precio de compra', 'purchase price', 'Purchase Price']);
+                const salePriceKey = findKey(['Precio de Venta', 'precio de venta', 'sale price', 'Sale Price']);
+                const imageKey = findKey(['Imagen', 'imagen', 'image', 'Image']);
 
-                    if (!barcodeKey) {
-                        console.warn('Producto sin código de barras:', product);
-                        continue;
-                    }
-
-                    try {
-                        const newProduct = {
-                            barcode: product[barcodeKey].toString(),
-                            description: product[descriptionKey] || '',
-                            stock: parseInt(product[stockKey] || '0'),
-                            minStock: parseInt(product[minStockKey] || '0'),
-                            purchasePrice: parseFloat(product[purchasePriceKey] || '0'),
-                            salePrice: parseFloat(product[salePriceKey] || '0'),
-                            image: product[imageKey] || ''
-                        };
-
-                        console.log('Intentando agregar producto:', newProduct);
-                        await db.addProduct(newProduct);
-                        importedCount++;
-                        console.log('Producto agregado con éxito');
-                    } catch (error) {
-                        console.error('Error al agregar producto:', product, error);
-                    }
+                if (!barcodeKey) {
+                    console.warn('Producto sin código de barras:', product);
+                    continue; // Si no tiene código de barras, ignorar el producto
                 }
 
-                console.log(`Importación completada. ${importedCount} productos importados correctamente.`);
-                showToast(`Importación completada. ${importedCount} productos importados correctamente.`);
-            } catch (error) {
-                console.error('Error durante la importación:', error);
-                showToast('Error durante la importación. Revisa la consola para más detalles.');
+                try {
+                    const newProduct = {
+                        barcode: product[barcodeKey].toString(),
+                        description: product[descriptionKey] || '',
+                        stock: parseInt(product[stockKey] || '0'),
+                        minStock: parseInt(product[minStockKey] || '0'),
+                        purchasePrice: parseFloat(product[purchasePriceKey] || '0'),
+                        salePrice: parseFloat(product[salePriceKey] || '0'),
+                        image: product[imageKey] || ''
+                    };
+
+                    console.log('Intentando agregar producto:', newProduct);
+                    await db.addProduct(newProduct); // Agregar a la base de datos
+                    importedCount++;
+                    console.log('Producto agregado con éxito');
+                } catch (error) {
+                    console.error('Error al agregar producto:', product, error);
+                }
             }
-        };
 
-        reader.onerror = (error) => {
-            console.error('Error al leer el archivo:', error);
-            showToast('Error al leer el archivo. Por favor, intenta de nuevo.');
-        };
+            console.log(`${importedCount} productos importados correctamente.`);
+            showToast(`${importedCount} productos importados correctamente.`);
+        } catch (error) {
+            console.error('Error durante la importación:', error);
+            showToast('Error durante la importación. Revisa la consola para más detalles.');
+        }
+    };
 
-        reader.readAsArrayBuffer(file);
-    });
+    reader.onerror = (error) => {
+        console.error('Error al leer el archivo:', error);
+        showToast('Error al leer el archivo. Por favor, intenta de nuevo.');
+    };
+
+    reader.readAsArrayBuffer(file);
+});
+
 
     document.getElementById('export-button').addEventListener('click', async () => {
         const allProducts = await db.getAllProducts();
