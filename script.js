@@ -2,7 +2,6 @@
   © [2024] [SYSMARKETHM]. Todos los derechos reservados.
   Este archivo es parte de [M-Escaner], propiedad de [SYSMARKETHM].
   El uso, distribución o reproducción no autorizados de este material están estrictamente prohibidos.
-  Para obtener permiso para usar cualquier parte de este código, por favor contacta a [https://sysmarket-hm.web.app/].
 */
 
 import { auth, database } from './firebaseConfig.js';
@@ -109,7 +108,6 @@ onAuthStateChanged(auth, async (user) => {
         appContainer.style.display = 'none';
     }
 });
-
 
 // Clase para manejar la base de datos de productos
 class ProductDatabase {
@@ -246,18 +244,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
-    // Manejar la selección del autocompletado
+    // Evitar búsqueda automática al seleccionar una opción de autocompletado
     descriptionInput.addEventListener('change', async (e) => {
         const selectedDescription = e.target.value.trim();
         const allProducts = await db.getAllProducts();
         const selectedProduct = allProducts.find(product => product.description === selectedDescription);
         if (selectedProduct) {
             fillForm(selectedProduct); // Llenar el formulario con el producto seleccionado
-        } else {
-            showToast('Producto no encontrado.');
         }
     });
 
+    // Función para iniciar el escáner de códigos de barras
     async function startScanner() {
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
@@ -286,6 +283,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         video.srcObject.getTracks().forEach(track => track.stop());
         scannerContainer.style.display = 'none';
     }
+
+    // Búsqueda solo al presionar el botón de "Buscar"
+    document.getElementById('search-button').addEventListener('click', () => {
+        const query = barcodeInput.value.trim() || descriptionInput.value.trim();
+        if (query) {
+            searchProduct(query);
+        } else {
+            showToast('Por favor, introduce un código de barras o nombre de producto para buscar.');
+        }
+    });
 
     // Función para buscar productos
     async function searchProduct(query) {
@@ -372,15 +379,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         startScanner();
-    });
-
-    document.getElementById('search-button').addEventListener('click', () => {
-        const query = barcodeInput.value.trim() || descriptionInput.value.trim();
-        if (query) {
-            searchProduct(query);
-        } else {
-            showToast('Por favor, introduce un código de barras o nombre de producto para buscar.');
-        }
     });
 
     document.getElementById('save-button').addEventListener('click', async () => {
