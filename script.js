@@ -66,9 +66,8 @@ loginForm.addEventListener('submit', async (e) => {
             // Si ya existe un dispositivo vinculado
             if (userDoc.deviceId !== deviceId) {
                 // Si el dispositivo actual no coincide con el vinculado, denegar acceso
-                await auth.signOut();
                 showToast('Acceso denegado. Esta cuenta está vinculada a otro dispositivo.');
-                return;
+                return;  // Se detiene el acceso sin cerrar la sesión del dispositivo original
             }
         } else {
             // Si es la primera vez que se inicia sesión, vincular el dispositivo
@@ -327,22 +326,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         return null;
     }
 
-function fillForm(product) {
-    barcodeInput.value = product.barcode || '';
-    descriptionInput.value = product.description || '';
-    stockInput.value = product.stock || '';
-    minStockInput.value = product.minStock || '';
-    purchasePriceInput.value = product.purchasePrice || '';
-    salePriceInput.value = product.salePrice || '';
+    function fillForm(product) {
+        barcodeInput.value = product.barcode || '';
+        descriptionInput.value = product.description || '';
+        stockInput.value = product.stock || '';
+        minStockInput.value = product.minStock || '';
+        purchasePriceInput.value = product.purchasePrice || '';
+        salePriceInput.value = product.salePrice || '';
 
-    // Verifica si el elemento de imagen existe y si hay una imagen disponible
-    if (productImage && product.image) {
-        productImage.src = product.image;
-        productImage.style.display = 'block';
-    } else if (productImage) {
-        productImage.style.display = 'none';
+        // Verifica si el elemento de imagen existe y si hay una imagen disponible
+        if (productImage && product.image) {
+            productImage.src = product.image;
+            productImage.style.display = 'block';
+        } else if (productImage) {
+            productImage.style.display = 'none';
+        }
     }
-}
 
     document.getElementById('scan-button').addEventListener('click', async () => {
         if (!('BarcodeDetector' in window)) {
@@ -374,7 +373,6 @@ function fillForm(product) {
             minStock: parseInt(minStockInput.value) || 0,
             purchasePrice: parseFloat(purchasePriceInput.value) || 0,
             salePrice: parseFloat(salePriceInput.value) || 0,
-            
         };
 
         await db.addProduct(product);
@@ -384,20 +382,20 @@ function fillForm(product) {
 
     document.getElementById('clear-button').addEventListener('click', clearForm);
 
-function clearForm() {
-    barcodeInput.value = '';
-    descriptionInput.value = '';
-    stockInput.value = '';
-    minStockInput.value = '';
-    purchasePriceInput.value = '';
-    salePriceInput.value = '';
+    function clearForm() {
+        barcodeInput.value = '';
+        descriptionInput.value = '';
+        stockInput.value = '';
+        minStockInput.value = '';
+        purchasePriceInput.value = '';
+        salePriceInput.value = '';
 
-    // Verifica si el elemento de imagen existe antes de intentar modificarlo
-    if (productImage) {
-        productImage.src = '';
-        productImage.style.display = 'none';
+        // Verifica si el elemento de imagen existe antes de intentar modificarlo
+        if (productImage) {
+            productImage.src = '';
+            productImage.style.display = 'none';
+        }
     }
-}
 
     // Modificar el botón para redirigir a la página de "low_stock.html"
     lowStockButton.addEventListener('click', () => {
