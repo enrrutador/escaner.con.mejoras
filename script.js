@@ -319,20 +319,23 @@ document.addEventListener('DOMContentLoaded', async () => {
         return null;
     }
 
-    function fillForm(product) {
-        barcodeInput.value = product.barcode || '';
-        descriptionInput.value = product.description || '';
-        stockInput.value = product.stock || '';
-        minStockInput.value = product.minStock || '';
-        purchasePriceInput.value = product.purchasePrice || '';
-        salePriceInput.value = product.salePrice || '';
-        if (product.image) {
-            productImage.src = product.image;
-            productImage.style.display = 'block';
-        } else {
-            productImage.style.display = 'none';
-        }
+function fillForm(product) {
+    barcodeInput.value = product.barcode || '';
+    descriptionInput.value = product.description || '';
+    stockInput.value = product.stock || '';
+    minStockInput.value = product.minStock || '';
+    purchasePriceInput.value = product.purchasePrice || '';
+    salePriceInput.value = product.salePrice || '';
+
+    // Verifica si el elemento de imagen existe y si hay una imagen disponible
+    if (productImage && product.image) {
+        productImage.src = product.image;
+        productImage.style.display = 'block';
+    } else if (productImage) {
+        productImage.style.display = 'none';
     }
+}
+
 
     document.getElementById('scan-button').addEventListener('click', async () => {
         if (!('BarcodeDetector' in window)) {
@@ -374,16 +377,21 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     document.getElementById('clear-button').addEventListener('click', clearForm);
 
-    function clearForm() {
-        barcodeInput.value = '';
-        descriptionInput.value = '';
-        stockInput.value = '';
-        minStockInput.value = '';
-        purchasePriceInput.value = '';
-        salePriceInput.value = '';
+function clearForm() {
+    barcodeInput.value = '';
+    descriptionInput.value = '';
+    stockInput.value = '';
+    minStockInput.value = '';
+    purchasePriceInput.value = '';
+    salePriceInput.value = '';
+
+    // Verifica si el elemento de imagen existe antes de intentar modificarlo
+    if (productImage) {
         productImage.src = '';
         productImage.style.display = 'none';
     }
+}
+
 
     // Modificar el botón para redirigir a la página de "low_stock.html"
     lowStockButton.addEventListener('click', () => {
