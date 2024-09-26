@@ -367,7 +367,7 @@ function fillForm(product) {
             minStock: parseInt(minStockInput.value) || 0,
             purchasePrice: parseFloat(purchasePriceInput.value) || 0,
             salePrice: parseFloat(salePriceInput.value) || 0,
-            image: productImage.src || ''
+            
         };
 
         await db.addProduct(product);
