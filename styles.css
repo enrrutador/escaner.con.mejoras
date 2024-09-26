@@ -236,7 +236,7 @@ input {
 }
 /* Estilos individualizados para el campo de email */
 #email {
-    width: 100%; /* Ancho completo */
+    width: 90%; /* Ancho completo */
     padding: 12px; /* Espacio interno */
     margin: 10px 0; /* Espacio entre el campo y otros elementos */
     border: 2px solid #0288D1; /* Borde de color */
@@ -248,7 +248,7 @@ input {
 
 /* Estilos individualizados para el campo de contraseña */
 #password {
-    width: 100%; /* Ancho completo */
+    width: 90%; /* Ancho completo */
     padding: 12px;
     margin: 10px 0;
     border: 2px solid #0288D1;
