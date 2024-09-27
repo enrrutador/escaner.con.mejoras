@@ -421,18 +421,24 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 
 
-// Asegúrate de que esto se ejecute una sola vez al cargar la página
+// Declarar db en el ámbito global
 let db;
-document.addEventListener('DOMContentLoaded', async () => {
+
+// Función para inicializar la base de datos
+async function initDatabase() {
     db = new ProductDatabase();
     await db.init();
-    
-    // Configurar el evento para el botón de importación
-    document.getElementById('import-button').addEventListener('click', handleImport);
-});
+    console.log('Base de datos inicializada');
+}
 
+// Función para manejar la importación
 async function handleImport() {
-    // Crear un input de tipo file temporalmente
+    if (!db) {
+        console.error('La base de datos no está inicializada');
+        showToast('Error: La base de datos no está lista. Por favor, recarga la página.');
+        return;
+    }
+
     const fileInput = document.createElement('input');
     fileInput.type = 'file';
     fileInput.accept = '.xlsx, .xls';
@@ -531,9 +537,14 @@ async function handleImport() {
         reader.readAsArrayBuffer(file);
     };
 
-    // Simular clic en el input file
     fileInput.click();
 }
+
+// Inicializar la base de datos y configurar el evento del botón cuando se carga la página
+document.addEventListener('DOMContentLoaded', async () => {
+    await initDatabase();
+    document.getElementById('import-button').addEventListener('click', handleImport);
+});
 
     document.getElementById('export-button').addEventListener('click', async () => {
         const allProducts = await db.getAllProducts();
