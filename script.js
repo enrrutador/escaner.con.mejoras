@@ -421,108 +421,119 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 
 
+// Asegúrate de que esto se ejecute una sola vez al cargar la página
+let db;
 document.addEventListener('DOMContentLoaded', async () => {
     db = new ProductDatabase();
     await db.init();
+    
+    // Configurar el evento para el botón de importación
+    document.getElementById('import-button').addEventListener('click', handleImport);
 });
 
-document.getElementById('import-button').addEventListener('click', () => {
-    fileInput.click();
-});
-
-fileInput.addEventListener('change', async (e) => {
-    const file = e.target.files[0];
-    if (!file) {
-        showToast('No se seleccionó ningún archivo.');
-        return;
-    }
-
-    const reader = new FileReader();
-
-    reader.onload = async (e) => {
-        try {
-            const data = new Uint8Array(e.target.result);
-            const workbook = XLSX.read(data, {type: 'array'});
-            const firstSheetName = workbook.SheetNames[0];
-            const worksheet = workbook.Sheets[firstSheetName];
-            const products = XLSX.utils.sheet_to_json(worksheet);
-
-            console.log('Productos leídos del archivo:', products);
-
-            if (products.length === 0) {
-                showToast('El archivo está vacío o no contiene datos válidos.');
-                return;
-            }
-
-            const columnMappings = {
-                barcode: ['Código de barras', 'Codigo de Barras', 'codigo de barras', 'barcode', 'Barcode'],
-                description: ['Descripción', 'Descripcion', 'descripcion', 'description', 'Description'],
-                stock: ['Stock', 'stock'],
-                minStock: ['Stock Mínimo', 'Stock minimo', 'stock minimo', 'min stock'],
-                purchasePrice: ['Precio de Compra', 'precio de compra', 'purchase price', 'Purchase Price'],
-                salePrice: ['Precio de Venta', 'precio de venta', 'sale price', 'Sale Price']
-            };
-
-            const findKey = (possibleKeys, product) => {
-                return possibleKeys.find(key => product.hasOwnProperty(key));
-            };
-
-            let importedCount = 0;
-            let errorCount = 0;
-
-            for (let product of products) {
-                try {
-                    const barcodeKey = findKey(columnMappings.barcode, product);
-                    const descriptionKey = findKey(columnMappings.description, product);
-                    const stockKey = findKey(columnMappings.stock, product);
-                    const minStockKey = findKey(columnMappings.minStock, product);
-                    const purchasePriceKey = findKey(columnMappings.purchasePrice, product);
-                    const salePriceKey = findKey(columnMappings.salePrice, product);
-
-                    if (!barcodeKey || !product[barcodeKey]) {
-                        console.warn('Producto sin código de barras válido:', product);
-                        errorCount++;
-                        continue;
-                    }
-
-                    const newProduct = {
-                        barcode: product[barcodeKey].toString().trim(),
-                        description: descriptionKey ? product[descriptionKey].toString().trim() : '',
-                        stock: stockKey ? parseInt(product[stockKey]) || 0 : 0,
-                        minStock: minStockKey ? parseInt(product[minStockKey]) || 0 : 0,
-                        purchasePrice: purchasePriceKey ? parseFloat(product[purchasePriceKey]) || 0 : 0,
-                        salePrice: salePriceKey ? parseFloat(product[salePriceKey]) || 0 : 0
-                    };
-
-                    // Validación adicional
-                    if (newProduct.barcode === '' || isNaN(newProduct.stock) || isNaN(newProduct.minStock) || 
-                        isNaN(newProduct.purchasePrice) || isNaN(newProduct.salePrice)) {
-                        throw new Error('Datos inválidos para el producto');
-                    }
-
-                    await db.addProduct(newProduct);
-                    console.log('Producto agregado correctamente:', newProduct);
-                    importedCount++;
-                } catch (error) {
-                    console.error('Error al agregar producto:', product, error);
-                    errorCount++;
-                }
-            }
-
-            showToast(`Importación completada. ${importedCount} productos importados. ${errorCount} errores.`);
-        } catch (error) {
-            console.error('Error durante la importación:', error);
-            showToast('Error durante la importación. Revisa la consola para más detalles.');
+async function handleImport() {
+    // Crear un input de tipo file temporalmente
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = '.xlsx, .xls';
+    
+    fileInput.onchange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) {
+            showToast('No se seleccionó ningún archivo.');
+            return;
         }
+
+        const reader = new FileReader();
+
+        reader.onload = async (e) => {
+            try {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, {type: 'array'});
+                const firstSheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[firstSheetName];
+                const products = XLSX.utils.sheet_to_json(worksheet);
+
+                console.log('Productos leídos del archivo:', products);
+
+                if (products.length === 0) {
+                    showToast('El archivo está vacío o no contiene datos válidos.');
+                    return;
+                }
+
+                const columnMappings = {
+                    barcode: ['Código de barras', 'Codigo de Barras', 'codigo de barras', 'barcode', 'Barcode'],
+                    description: ['Descripción', 'Descripcion', 'descripcion', 'description', 'Description'],
+                    stock: ['Stock', 'stock'],
+                    minStock: ['Stock Mínimo', 'Stock minimo', 'stock minimo', 'min stock'],
+                    purchasePrice: ['Precio de Compra', 'precio de compra', 'purchase price', 'Purchase Price'],
+                    salePrice: ['Precio de Venta', 'precio de venta', 'sale price', 'Sale Price']
+                };
+
+                const findKey = (possibleKeys, product) => {
+                    return possibleKeys.find(key => product.hasOwnProperty(key));
+                };
+
+                let importedCount = 0;
+                let errorCount = 0;
+
+                for (let product of products) {
+                    try {
+                        const barcodeKey = findKey(columnMappings.barcode, product);
+                        const descriptionKey = findKey(columnMappings.description, product);
+                        const stockKey = findKey(columnMappings.stock, product);
+                        const minStockKey = findKey(columnMappings.minStock, product);
+                        const purchasePriceKey = findKey(columnMappings.purchasePrice, product);
+                        const salePriceKey = findKey(columnMappings.salePrice, product);
+
+                        if (!barcodeKey || !product[barcodeKey]) {
+                            console.warn('Producto sin código de barras válido:', product);
+                            errorCount++;
+                            continue;
+                        }
+
+                        const newProduct = {
+                            barcode: product[barcodeKey].toString().trim(),
+                            description: descriptionKey ? product[descriptionKey].toString().trim() : '',
+                            stock: stockKey ? parseInt(product[stockKey]) || 0 : 0,
+                            minStock: minStockKey ? parseInt(product[minStockKey]) || 0 : 0,
+                            purchasePrice: purchasePriceKey ? parseFloat(product[purchasePriceKey]) || 0 : 0,
+                            salePrice: salePriceKey ? parseFloat(product[salePriceKey]) || 0 : 0
+                        };
+
+                        // Validación adicional
+                        if (newProduct.barcode === '' || isNaN(newProduct.stock) || isNaN(newProduct.minStock) || 
+                            isNaN(newProduct.purchasePrice) || isNaN(newProduct.salePrice)) {
+                            throw new Error('Datos inválidos para el producto');
+                        }
+
+                        await db.addProduct(newProduct);
+                        console.log('Producto agregado correctamente:', newProduct);
+                        importedCount++;
+                    } catch (error) {
+                        console.error('Error al agregar producto:', product, error);
+                        errorCount++;
+                    }
+                }
+
+                showToast(`Importación completada. ${importedCount} productos importados. ${errorCount} errores.`);
+            } catch (error) {
+                console.error('Error durante la importación:', error);
+                showToast('Error durante la importación. Revisa la consola para más detalles.');
+            }
+        };
+
+        reader.onerror = (error) => {
+            console.error('Error al leer el archivo:', error);
+            showToast('Error al leer el archivo. Por favor, intenta de nuevo.');
+        };
+
+        reader.readAsArrayBuffer(file);
     };
 
-    reader.onerror = (error) => {
-        console.error('Error al leer el archivo:', error);
-        showToast('Error al leer el archivo. Por favor, intenta de nuevo.');
-    };
-
-    reader.readAsArrayBuffer(file);
-});
+    // Simular clic en el input file
+    fileInput.click();
+}
 
     document.getElementById('export-button').addEventListener('click', async () => {
         const allProducts = await db.getAllProducts();
