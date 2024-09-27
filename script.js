@@ -15,7 +15,7 @@ function showToast(message) {
     toast.classList.add('show');
     setTimeout(() => {
         toast.classList.remove('show');
-    }, 3000); // El mensaje se muestra durante 3 segundos
+    }, 2500); // El mensaje se muestra durante 3 segundos
 }
 
 // Función para obtener o generar un ID de dispositivo único
@@ -452,7 +452,7 @@ fileInput.addEventListener('change', async (e) => {
                 const minStockKey = findKey(['Stock Mínimo', 'Stock minimo', 'stock minimo', 'min stock']);
                 const purchasePriceKey = findKey(['Precio de Compra', 'precio de compra', 'purchase price', 'Purchase Price']);
                 const salePriceKey = findKey(['Precio de Venta', 'precio de venta', 'sale price', 'Sale Price']);
-                const imageKey = findKey(['Imagen', 'imagen', 'image', 'Image']);
+               
 
                 if (!barcodeKey) {
                     console.warn('Producto sin código de barras:', product);
