@@ -417,13 +417,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.location.href = 'low_stock.html'; // Redirige a la página de productos con stock bajo
     });
 
-// Verificar si el botón se está detectando correctamente
-document.getElementById('import-button').addEventListener('click', () => {
-    console.log('Botón de importación clickeado');
-    document.getElementById('fileInput').click(); // Simula el clic en el input de archivo
-});
-
-document.getElementById('fileInput').addEventListener('change', async (e) => {
+fileInput.addEventListener('change', async (e) => {
     console.log('Evento de cambio detectado en el input de archivo');
     const file = e.target.files[0];
 
@@ -451,9 +445,85 @@ document.getElementById('fileInput').addEventListener('change', async (e) => {
                 return;
             }
 
-            // Resto del código para procesar productos
-            // ...
+            const firstProduct = products[0];
 
+            // Definir los mapeos de columnas
+            const columnMappings = {
+                barcode: ['Código de barras', 'Codigo de Barras', 'codigo de barras', 'barcode', 'Barcode'],
+                description: ['Descripción', 'Descripcion', 'descripcion', 'description', 'Description'],
+                stock: ['Stock', 'stock'],
+                minStock: ['Stock Mínimo', 'Stock minimo', 'stock minimo', 'min stock'],
+                purchasePrice: ['Precio de Compra', 'precio de compra', 'purchase price', 'Purchase Price'],
+                salePrice: ['Precio de Venta', 'precio de venta', 'sale price', 'Sale Price']
+            };
+
+            const findKey = (possibleKeys) => {
+                return possibleKeys.find(key => firstProduct.hasOwnProperty(key));
+            };
+
+            // Buscar las claves de las columnas en el archivo
+            const barcodeKey = findKey(columnMappings.barcode);
+            const descriptionKey = findKey(columnMappings.description);
+            const stockKey = findKey(columnMappings.stock);
+            const minStockKey = findKey(columnMappings.minStock);
+            const purchasePriceKey = findKey(columnMappings.purchasePrice);
+            const salePriceKey = findKey(columnMappings.salePrice);
+
+            // Validar la presencia de la columna de código de barras
+            if (!barcodeKey) {
+                console.warn('Falta la columna "Código de Barras". No se podrán identificar los productos.');
+                showToast('Error: No se encontró la columna "Código de Barras" en el archivo.');
+                return;
+            }
+
+            console.log('Claves detectadas - Código de Barras:', barcodeKey, 
+                        'Descripción:', descriptionKey, 
+                        'Stock:', stockKey, 
+                        'Stock Mínimo:', minStockKey, 
+                        'Precio de Compra:', purchasePriceKey, 
+                        'Precio de Venta:', salePriceKey);
+
+            let importedCount = 0;
+
+            // Inicializar la base de datos antes de agregar productos
+            const db = new ProductDatabase();
+            await db.init();  // Asegurarse de que la base de datos está lista
+
+            for (let product of products) {
+                try {
+                    // Crear un nuevo producto con los datos del archivo Excel
+                    const newProduct = {
+                        barcode: barcodeKey ? product[barcodeKey].toString() : '',
+                        description: descriptionKey ? product[descriptionKey] : '',
+                        stock: stockKey ? parseInt(product[stockKey] || '0') : 0,
+                        minStock: minStockKey ? parseInt(product[minStockKey] || '0') : 0,
+                        purchasePrice: purchasePriceKey ? parseFloat(product[purchasePriceKey] || '0') : 0,
+                        salePrice: salePriceKey ? parseFloat(product[salePriceKey] || '0') : 0
+                    };
+
+                    // Verificar todos los datos del producto
+                    console.log('Producto preparado para agregar:', newProduct);
+
+                    // Verificar si el producto tiene un código de barras válido
+                    if (!newProduct.barcode) {
+                        console.warn('Producto omitido debido a falta de código de barras:', product);
+                        continue; // Saltar productos sin código de barras
+                    }
+
+                    // Agregar o actualizar el producto en la base de datos
+                    await db.addProduct(newProduct);
+                    console.log('Producto agregado/actualizado correctamente:', newProduct);
+                    importedCount++;
+                } catch (error) {
+                    console.error('Error al agregar producto:', newProduct, error);
+                }
+            }
+
+            if (importedCount > 0) {
+                showToast(`${importedCount} productos importados correctamente.`);
+            } else {
+                showToast('No se importaron productos. Revisa el archivo y los datos.');
+            }
         } catch (error) {
             console.error('Error durante la importación:', error);
             showToast('Error durante la importación. Revisa la consola para más detalles.');
@@ -467,9 +537,6 @@ document.getElementById('fileInput').addEventListener('change', async (e) => {
 
     reader.readAsArrayBuffer(file);
 });
-
-
-
 
     document.getElementById('export-button').addEventListener('click', async () => {
         const allProducts = await db.getAllProducts();
