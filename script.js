@@ -421,130 +421,139 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 
 
-// Declarar db en el ámbito global
-let db;
+// Módulo de importación
+const ImportModule = {
+    db: null,
 
-// Función para inicializar la base de datos
-async function initDatabase() {
-    db = new ProductDatabase();
-    await db.init();
-    console.log('Base de datos inicializada');
-}
+    async initDatabase() {
+        this.db = new ProductDatabase();
+        await this.db.init();
+        console.log('Base de datos inicializada');
+    },
 
-// Función para manejar la importación
-async function handleImport() {
-    if (!db) {
-        console.error('La base de datos no está inicializada');
-        showToast('Error: La base de datos no está lista. Por favor, recarga la página.');
-        return;
-    }
-
-    const fileInput = document.createElement('input');
-    fileInput.type = 'file';
-    fileInput.accept = '.xlsx, .xls';
-    
-    fileInput.onchange = async (e) => {
-        const file = e.target.files[0];
-        if (!file) {
-            showToast('No se seleccionó ningún archivo.');
+    async handleImport() {
+        if (!this.db) {
+            console.error('La base de datos no está inicializada');
+            this.showToast('Error: La base de datos no está lista. Por favor, recarga la página.');
             return;
         }
 
-        const reader = new FileReader();
-
-        reader.onload = async (e) => {
-            try {
-                const data = new Uint8Array(e.target.result);
-                const workbook = XLSX.read(data, {type: 'array'});
-                const firstSheetName = workbook.SheetNames[0];
-                const worksheet = workbook.Sheets[firstSheetName];
-                const products = XLSX.utils.sheet_to_json(worksheet);
-
-                console.log('Productos leídos del archivo:', products);
-
-                if (products.length === 0) {
-                    showToast('El archivo está vacío o no contiene datos válidos.');
-                    return;
-                }
-
-                const columnMappings = {
-                    barcode: ['Código de barras', 'Codigo de Barras', 'codigo de barras', 'barcode', 'Barcode'],
-                    description: ['Descripción', 'Descripcion', 'descripcion', 'description', 'Description'],
-                    stock: ['Stock', 'stock'],
-                    minStock: ['Stock Mínimo', 'Stock minimo', 'stock minimo', 'min stock'],
-                    purchasePrice: ['Precio de Compra', 'precio de compra', 'purchase price', 'Purchase Price'],
-                    salePrice: ['Precio de Venta', 'precio de venta', 'sale price', 'Sale Price']
-                };
-
-                const findKey = (possibleKeys, product) => {
-                    return possibleKeys.find(key => product.hasOwnProperty(key));
-                };
-
-                let importedCount = 0;
-                let errorCount = 0;
-
-                for (let product of products) {
-                    try {
-                        const barcodeKey = findKey(columnMappings.barcode, product);
-                        const descriptionKey = findKey(columnMappings.description, product);
-                        const stockKey = findKey(columnMappings.stock, product);
-                        const minStockKey = findKey(columnMappings.minStock, product);
-                        const purchasePriceKey = findKey(columnMappings.purchasePrice, product);
-                        const salePriceKey = findKey(columnMappings.salePrice, product);
-
-                        if (!barcodeKey || !product[barcodeKey]) {
-                            console.warn('Producto sin código de barras válido:', product);
-                            errorCount++;
-                            continue;
-                        }
-
-                        const newProduct = {
-                            barcode: product[barcodeKey].toString().trim(),
-                            description: descriptionKey ? product[descriptionKey].toString().trim() : '',
-                            stock: stockKey ? parseInt(product[stockKey]) || 0 : 0,
-                            minStock: minStockKey ? parseInt(product[minStockKey]) || 0 : 0,
-                            purchasePrice: purchasePriceKey ? parseFloat(product[purchasePriceKey]) || 0 : 0,
-                            salePrice: salePriceKey ? parseFloat(product[salePriceKey]) || 0 : 0
-                        };
-
-                        // Validación adicional
-                        if (newProduct.barcode === '' || isNaN(newProduct.stock) || isNaN(newProduct.minStock) || 
-                            isNaN(newProduct.purchasePrice) || isNaN(newProduct.salePrice)) {
-                            throw new Error('Datos inválidos para el producto');
-                        }
-
-                        await db.addProduct(newProduct);
-                        console.log('Producto agregado correctamente:', newProduct);
-                        importedCount++;
-                    } catch (error) {
-                        console.error('Error al agregar producto:', product, error);
-                        errorCount++;
-                    }
-                }
-
-                showToast(`Importación completada. ${importedCount} productos importados. ${errorCount} errores.`);
-            } catch (error) {
-                console.error('Error durante la importación:', error);
-                showToast('Error durante la importación. Revisa la consola para más detalles.');
+        const fileInput = document.createElement('input');
+        fileInput.type = 'file';
+        fileInput.accept = '.xlsx, .xls';
+        
+        fileInput.onchange = async (e) => {
+            const file = e.target.files[0];
+            if (!file) {
+                this.showToast('No se seleccionó ningún archivo.');
+                return;
             }
+
+            const reader = new FileReader();
+
+            reader.onload = async (e) => {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, {type: 'array'});
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    const products = XLSX.utils.sheet_to_json(worksheet);
+
+                    console.log('Productos leídos del archivo:', products);
+
+                    if (products.length === 0) {
+                        this.showToast('El archivo está vacío o no contiene datos válidos.');
+                        return;
+                    }
+
+                    const columnMappings = {
+                        barcode: ['Código de barras', 'Codigo de Barras', 'codigo de barras', 'barcode', 'Barcode'],
+                        description: ['Descripción', 'Descripcion', 'descripcion', 'description', 'Description'],
+                        stock: ['Stock', 'stock'],
+                        minStock: ['Stock Mínimo', 'Stock minimo', 'stock minimo', 'min stock'],
+                        purchasePrice: ['Precio de Compra', 'precio de compra', 'purchase price', 'Purchase Price'],
+                        salePrice: ['Precio de Venta', 'precio de venta', 'sale price', 'Sale Price']
+                    };
+
+                    const findKey = (possibleKeys, product) => {
+                        return possibleKeys.find(key => product.hasOwnProperty(key));
+                    };
+
+                    let importedCount = 0;
+                    let errorCount = 0;
+
+                    for (let product of products) {
+                        try {
+                            const barcodeKey = findKey(columnMappings.barcode, product);
+                            const descriptionKey = findKey(columnMappings.description, product);
+                            const stockKey = findKey(columnMappings.stock, product);
+                            const minStockKey = findKey(columnMappings.minStock, product);
+                            const purchasePriceKey = findKey(columnMappings.purchasePrice, product);
+                            const salePriceKey = findKey(columnMappings.salePrice, product);
+
+                            if (!barcodeKey || !product[barcodeKey]) {
+                                console.warn('Producto sin código de barras válido:', product);
+                                errorCount++;
+                                continue;
+                            }
+
+                            const newProduct = {
+                                barcode: product[barcodeKey].toString().trim(),
+                                description: descriptionKey ? product[descriptionKey].toString().trim() : '',
+                                stock: stockKey ? parseInt(product[stockKey]) || 0 : 0,
+                                minStock: minStockKey ? parseInt(product[minStockKey]) || 0 : 0,
+                                purchasePrice: purchasePriceKey ? parseFloat(product[purchasePriceKey]) || 0 : 0,
+                                salePrice: salePriceKey ? parseFloat(product[salePriceKey]) || 0 : 0
+                            };
+
+                            // Validación adicional
+                            if (newProduct.barcode === '' || isNaN(newProduct.stock) || isNaN(newProduct.minStock) || 
+                                isNaN(newProduct.purchasePrice) || isNaN(newProduct.salePrice)) {
+                                throw new Error('Datos inválidos para el producto');
+                            }
+
+                            await this.db.addProduct(newProduct);
+                            console.log('Producto agregado correctamente:', newProduct);
+                            importedCount++;
+                        } catch (error) {
+                            console.error('Error al agregar producto:', product, error);
+                            errorCount++;
+                        }
+                    }
+
+                    this.showToast(`Importación completada. ${importedCount} productos importados. ${errorCount} errores.`);
+                } catch (error) {
+                    console.error('Error durante la importación:', error);
+                    this.showToast('Error durante la importación. Revisa la consola para más detalles.');
+                }
+            };
+
+            reader.onerror = (error) => {
+                console.error('Error al leer el archivo:', error);
+                this.showToast('Error al leer el archivo. Por favor, intenta de nuevo.');
+            };
+
+            reader.readAsArrayBuffer(file);
         };
 
-        reader.onerror = (error) => {
-            console.error('Error al leer el archivo:', error);
-            showToast('Error al leer el archivo. Por favor, intenta de nuevo.');
-        };
+        fileInput.click();
+    },
 
-        reader.readAsArrayBuffer(file);
-    };
+    showToast(message) {
+        // Implementa esta función según cómo muestres los mensajes en tu aplicación
+        console.log(message); // Por ahora, solo lo mostramos en la consola
+    },
 
-    fileInput.click();
-}
+    init() {
+        document.addEventListener('DOMContentLoaded', async () => {
+            await this.initDatabase();
+            document.getElementById('import-button').addEventListener('click', () => this.handleImport());
+        });
+    }
+};
 
-// Inicializar la base de datos y configurar el evento del botón cuando se carga la página
-document.addEventListener('DOMContentLoaded', async () => {
-    await initDatabase();
-    document.getElementById('import-button').addEventListener('click', handleImport);
-});
+// Inicializar el módulo
+ImportModule.init();
 
     document.getElementById('export-button').addEventListener('click', async () => {
         const allProducts = await db.getAllProducts();
