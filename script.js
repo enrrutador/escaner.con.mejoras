@@ -15,7 +15,7 @@ function showToast(message) {
     toast.classList.add('show');
     setTimeout(() => {
         toast.classList.remove('show');
-    }, 2500); // El mensaje se muestra durante 3 segundos
+    }, 2000); // El mensaje se muestra durante 2 segundos
 }
 
 // Función para obtener o generar un ID de dispositivo único
@@ -434,13 +434,21 @@ fileInput.addEventListener('change', async (e) => {
             const worksheet = workbook.Sheets[firstSheetName];
             const products = XLSX.utils.sheet_to_json(worksheet);
 
+            // Asegurarse de que el archivo fue leído y mostrar los productos
             console.log('Productos leídos del archivo:', products);
 
+            // Imprimir nombres de columnas para verificar
+            if (products.length > 0) {
+                console.log('Nombres de columnas en el archivo:', Object.keys(products[0]));
+            }
+
             let importedCount = 0;
+
+            // Procesar cada producto
             for (let product of products) {
                 console.log('Procesando producto:', product);
                 
-                // Función auxiliar para buscar la clave correcta, mejorada para manejar diferentes nombres de columnas
+                // Función auxiliar para buscar la clave correcta
                 const findKey = (possibleKeys) => {
                     return possibleKeys.find(key => product.hasOwnProperty(key));
                 };
@@ -452,7 +460,9 @@ fileInput.addEventListener('change', async (e) => {
                 const minStockKey = findKey(['Stock Mínimo', 'Stock minimo', 'stock minimo', 'min stock']);
                 const purchasePriceKey = findKey(['Precio de Compra', 'precio de compra', 'purchase price', 'Purchase Price']);
                 const salePriceKey = findKey(['Precio de Venta', 'precio de venta', 'sale price', 'Sale Price']);
-               
+
+                // Verificar si el código de barras fue encontrado
+                console.log('Clave de Código de Barras:', barcodeKey);
 
                 if (!barcodeKey) {
                     console.warn('Producto sin código de barras:', product);
@@ -470,7 +480,9 @@ fileInput.addEventListener('change', async (e) => {
                         image: product[imageKey] || ''
                     };
 
-                    console.log('Intentando agregar producto:', newProduct);
+                    // Verificar si se está creando el objeto correctamente
+                    console.log('Nuevo producto creado:', newProduct);
+
                     await db.addProduct(newProduct); // Agregar a la base de datos
                     importedCount++;
                     console.log('Producto agregado con éxito');
@@ -494,85 +506,7 @@ fileInput.addEventListener('change', async (e) => {
 
     reader.readAsArrayBuffer(file);
 });
-fileInput.addEventListener('change', async (e) => {
-    const file = e.target.files[0];
-    const reader = new FileReader();
 
-    reader.onload = async (e) => {
-        try {
-            const data = new Uint8Array(e.target.result);
-            const workbook = XLSX.read(data, {type: 'array'});
-            const firstSheetName = workbook.SheetNames[0];
-            const worksheet = workbook.Sheets[firstSheetName];
-            const products = XLSX.utils.sheet_to_json(worksheet);
-
-            console.log('Productos leídos del archivo:', products);
-
-            // Imprime las claves de la primera fila para verificar las columnas del archivo Excel
-            if (products.length > 0) {
-                console.log('Nombres de columnas en el archivo:', Object.keys(products[0]));
-            }
-
-            let importedCount = 0;
-            for (let product of products) {
-                console.log('Procesando producto:', product);
-                
-                // Función auxiliar para buscar la clave correcta
-                const findKey = (possibleKeys) => {
-                    return possibleKeys.find(key => product.hasOwnProperty(key));
-                };
-
-                // Buscar las claves correctas en el archivo
-                const barcodeKey = findKey(['Código de barras', 'Codigo de Barras', 'codigo de barras', 'barcode', 'Barcode']);
-                const descriptionKey = findKey(['Descripción', 'Descripcion', 'descripcion', 'description', 'Description']);
-                const stockKey = findKey(['Stock', 'stock']);
-                const minStockKey = findKey(['Stock Mínimo', 'Stock minimo', 'stock minimo', 'min stock']);
-                const purchasePriceKey = findKey(['Precio de Compra', 'precio de compra', 'purchase price', 'Purchase Price']);
-                const salePriceKey = findKey(['Precio de Venta', 'precio de venta', 'sale price', 'Sale Price']);
-                const imageKey = findKey(['Imagen', 'imagen', 'image', 'Image']);
-
-                // Asegúrate de que se encontró una clave válida
-                console.log('Clave de Código de Barras:', barcodeKey);
-                if (!barcodeKey) {
-                    console.warn('Producto sin código de barras:', product);
-                    continue;
-                }
-
-                try {
-                    const newProduct = {
-                        barcode: product[barcodeKey].toString(),
-                        description: product[descriptionKey] || '',
-                        stock: parseInt(product[stockKey] || '0'),
-                        minStock: parseInt(product[minStockKey] || '0'),
-                        purchasePrice: parseFloat(product[purchasePriceKey] || '0'),
-                        salePrice: parseFloat(product[salePriceKey] || '0'),
-                        image: product[imageKey] || ''
-                    };
-
-                    console.log('Intentando agregar producto:', newProduct);
-                    await db.addProduct(newProduct); // Agregar a la base de datos
-                    importedCount++;
-                    console.log('Producto agregado con éxito');
-                } catch (error) {
-                    console.error('Error al agregar producto:', product, error);
-                }
-            }
-
-            console.log(`Importación completada. ${importedCount} productos importados correctamente.`);
-            showToast(`Importación completada. ${importedCount} productos importados correctamente.`);
-        } catch (error) {
-            console.error('Error durante la importación:', error);
-            showToast('Error durante la importación. Revisa la consola para más detalles.');
-        }
-    };
-
-    reader.onerror = (error) => {
-        console.error('Error al leer el archivo:', error);
-        showToast('Error al leer el archivo. Por favor, intenta de nuevo.');
-    };
-
-    reader.readAsArrayBuffer(file);
-});
 
 
     document.getElementById('export-button').addEventListener('click', async () => {
