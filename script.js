@@ -439,7 +439,7 @@ fileInput.addEventListener('change', async (e) => {
             // Asumiendo que hay al menos una fila, obtener las claves dinámicamente
             const firstProduct = products[0];
 
-            // Definir los posibles nombres de columna para cada campo
+            // Definir los posibles nombres de columna para cada campo prioritario
             const columnMappings = {
                 barcode: ['Código de barras', 'Codigo de Barras', 'codigo de barras', 'barcode', 'Barcode'],
                 description: ['Descripción', 'Descripcion', 'descripcion', 'description', 'Description'],
@@ -462,10 +462,17 @@ fileInput.addEventListener('change', async (e) => {
             const purchasePriceKey = findKey(columnMappings.purchasePrice);
             const salePriceKey = findKey(columnMappings.salePrice);
 
-            // Verificar si las claves se encontraron
-            if (!barcodeKey || !descriptionKey || !stockKey) {
-                showToast('El archivo no tiene las columnas necesarias.');
-                return;
+            // Informar de las columnas faltantes pero continuar
+            if (!barcodeKey) {
+                console.warn('Falta la columna "Código de Barras". No se podrán identificar los productos.');
+            }
+
+            if (!descriptionKey) {
+                console.warn('Falta la columna "Descripción".');
+            }
+
+            if (!stockKey) {
+                console.warn('Falta la columna "Stock".');
             }
 
             let importedCount = 0;
@@ -474,13 +481,15 @@ fileInput.addEventListener('change', async (e) => {
             for (let product of products) {
                 try {
                     const newProduct = {
-                        barcode: product[barcodeKey].toString(),
-                        description: product[descriptionKey] || '',
-                        stock: parseInt(product[stockKey] || '0'),
-                        minStock: parseInt(product[minStockKey] || '0'),
-                        purchasePrice: parseFloat(product[purchasePriceKey] || '0'),
-                        salePrice: parseFloat(product[salePriceKey] || '0')
+                        barcode: barcodeKey ? product[barcodeKey].toString() : '', // Si no está, se deja vacío
+                        description: descriptionKey ? product[descriptionKey] : '',
+                        stock: stockKey ? parseInt(product[stockKey] || '0') : 0,
+                        minStock: minStockKey ? parseInt(product[minStockKey] || '0') : 0,
+                        purchasePrice: purchasePriceKey ? parseFloat(product[purchasePriceKey] || '0') : 0,
+                        salePrice: salePriceKey ? parseFloat(product[salePriceKey] || '0') : 0
                     };
+
+                    console.log('Nuevo producto creado:', newProduct);
 
                     await db.addProduct(newProduct); // Agregar a la base de datos
                     importedCount++;
@@ -503,8 +512,6 @@ fileInput.addEventListener('change', async (e) => {
 
     reader.readAsArrayBuffer(file);
 });
-
-
 
 
     document.getElementById('export-button').addEventListener('click', async () => {
