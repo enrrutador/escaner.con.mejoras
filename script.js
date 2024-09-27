@@ -232,31 +232,45 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const columnMappings = {
                     barcode: [
                         'Código de barras', 'Codigo de Barras', 'codigo de barras',
-                        'barcode', 'Barcode', 'Cód. barras', 'Cód. de barras'
+                        'barcode', 'Barcode', 'Cód. barras', 'Cód. de barras',
+                        'código de barras', 'CÓDIGO DE BARRAS', 'cód. de barras'
                     ],
                     description: [
                         'Descripción', 'Descripcion', 'descripcion', 'description', 
-                        'Description', 'Nombre del Producto', 'Nombre'
+                        'Description', 'Nombre del Producto', 'Nombre',
+                        'producto', 'prod', 'Descripción del Producto'
                     ],
                     stock: [
-                        'Stock', 'stock', 'Cantidad', 'Cantidad disponible'
+                        'Stock', 'stock', 'Cantidad', 'Cantidad disponible',
+                        'existencias', 'stock actual', 'total'
                     ],
                     minStock: [
                         'Stock Mínimo', 'Stock minimo', 'stock minimo', 
-                        'min stock', 'Mínimo de Stock', 'Stock bajo'
+                        'min stock', 'Mínimo de Stock', 'Stock bajo',
+                        'stock mínimo', 'mínimo', 'stock critico'
                     ],
                     purchasePrice: [
                         'Precio de Compra', 'precio de compra', 'purchase price', 
-                        'Purchase Price', 'Costo', 'Costo de Compra'
+                        'Purchase Price', 'Costo', 'Costo de Compra',
+                        'precio', 'precio_compra'
                     ],
                     salePrice: [
                         'Precio de Venta', 'precio de venta', 'sale price', 
-                        'Sale Price', 'Precio', 'Valor de Venta'
+                        'Sale Price', 'Precio', 'Valor de Venta',
+                        'precio_venta', 'costo_venta'
                     ]
                 };
 
+                // Normalizar texto para comparación
+                const normalizeText = (text) => {
+                    return text.toLowerCase().trim().replace(/\s+/g, '_');
+                };
+
                 const findKey = (possibleKeys) => {
-                    return possibleKeys.find(key => firstProduct.hasOwnProperty(key));
+                    return possibleKeys.find(key => {
+                        const normalizedKey = normalizeText(key);
+                        return firstProduct.hasOwnProperty(normalizedKey);
+                    });
                 };
 
                 // Buscar las claves de las columnas en el archivo
