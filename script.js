@@ -227,15 +227,32 @@ document.addEventListener('DOMContentLoaded', async () => {
                     return;
                 }
 
-                // Mapeos de columnas para importar
+                // Mapeos de columnas para importar con más coincidencias
                 const firstProduct = products[0];
                 const columnMappings = {
-                    barcode: ['Código de barras', 'Codigo de Barras', 'codigo de barras', 'barcode', 'Barcode'],
-                    description: ['Descripción', 'Descripcion', 'descripcion', 'description', 'Description'],
-                    stock: ['Stock', 'stock'],
-                    minStock: ['Stock Mínimo', 'Stock minimo', 'stock minimo', 'min stock'],
-                    purchasePrice: ['Precio de Compra', 'precio de compra', 'purchase price', 'Purchase Price'],
-                    salePrice: ['Precio de Venta', 'precio de venta', 'sale price', 'Sale Price']
+                    barcode: [
+                        'Código de barras', 'Codigo de Barras', 'codigo de barras',
+                        'barcode', 'Barcode', 'Cód. barras', 'Cód. de barras'
+                    ],
+                    description: [
+                        'Descripción', 'Descripcion', 'descripcion', 'description', 
+                        'Description', 'Nombre del Producto', 'Nombre'
+                    ],
+                    stock: [
+                        'Stock', 'stock', 'Cantidad', 'Cantidad disponible'
+                    ],
+                    minStock: [
+                        'Stock Mínimo', 'Stock minimo', 'stock minimo', 
+                        'min stock', 'Mínimo de Stock', 'Stock bajo'
+                    ],
+                    purchasePrice: [
+                        'Precio de Compra', 'precio de compra', 'purchase price', 
+                        'Purchase Price', 'Costo', 'Costo de Compra'
+                    ],
+                    salePrice: [
+                        'Precio de Venta', 'precio de venta', 'sale price', 
+                        'Sale Price', 'Precio', 'Valor de Venta'
+                    ]
                 };
 
                 const findKey = (possibleKeys) => {
