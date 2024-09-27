@@ -476,8 +476,8 @@ fileInput.addEventListener('change', async (e) => {
                         stock: parseInt(product[stockKey] || '0'),
                         minStock: parseInt(product[minStockKey] || '0'),
                         purchasePrice: parseFloat(product[purchasePriceKey] || '0'),
-                        salePrice: parseFloat(product[salePriceKey] || '0'),
-                        image: product[imageKey] || ''
+                        salePrice: parseFloat(product[salePriceKey] || '0')
+                        // Eliminamos la propiedad `image` ya que el archivo no tiene esa columna
                     };
 
                     // Verificar si se está creando el objeto correctamente
@@ -506,6 +506,7 @@ fileInput.addEventListener('change', async (e) => {
 
     reader.readAsArrayBuffer(file);
 });
+
 
 
 
