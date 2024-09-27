@@ -418,12 +418,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.location.href = 'low_stock.html'; // Redirige a la página de productos con stock bajo
     });
 
-document.getElementById('import-button').addEventListener('click', () => {
-    fileInput.click();
-});
 
-// Asegúrate de que esto se ejecute una sola vez al cargar la página
-let db;
+
+
 document.addEventListener('DOMContentLoaded', async () => {
     db = new ProductDatabase();
     await db.init();
