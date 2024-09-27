@@ -422,8 +422,24 @@ document.getElementById('import-button').addEventListener('click', () => {
     fileInput.click();
 });
 
+// Asegúrate de que esto se ejecute una sola vez al cargar la página
+let db;
+document.addEventListener('DOMContentLoaded', async () => {
+    db = new ProductDatabase();
+    await db.init();
+});
+
+document.getElementById('import-button').addEventListener('click', () => {
+    fileInput.click();
+});
+
 fileInput.addEventListener('change', async (e) => {
     const file = e.target.files[0];
+    if (!file) {
+        showToast('No se seleccionó ningún archivo.');
+        return;
+    }
+
     const reader = new FileReader();
 
     reader.onload = async (e) => {
@@ -436,8 +452,10 @@ fileInput.addEventListener('change', async (e) => {
 
             console.log('Productos leídos del archivo:', products);
 
-            // Asumiendo que hay al menos una fila, obtener las claves dinámicamente
-            const firstProduct = products[0];
+            if (products.length === 0) {
+                showToast('El archivo está vacío o no contiene datos válidos.');
+                return;
+            }
 
             const columnMappings = {
                 barcode: ['Código de barras', 'Codigo de Barras', 'codigo de barras', 'barcode', 'Barcode'],
@@ -448,51 +466,53 @@ fileInput.addEventListener('change', async (e) => {
                 salePrice: ['Precio de Venta', 'precio de venta', 'sale price', 'Sale Price']
             };
 
-            const findKey = (possibleKeys) => {
-                return possibleKeys.find(key => firstProduct.hasOwnProperty(key));
+            const findKey = (possibleKeys, product) => {
+                return possibleKeys.find(key => product.hasOwnProperty(key));
             };
 
-            const barcodeKey = findKey(columnMappings.barcode);
-            const descriptionKey = findKey(columnMappings.description);
-            const stockKey = findKey(columnMappings.stock);
-            const minStockKey = findKey(columnMappings.minStock);
-            const purchasePriceKey = findKey(columnMappings.purchasePrice);
-            const salePriceKey = findKey(columnMappings.salePrice);
-
-            if (!barcodeKey) {
-                console.warn('Falta la columna "Código de Barras". No se podrán identificar los productos.');
-            }
-
             let importedCount = 0;
-
-            // Inicializar la base de datos antes de agregar productos
-            const db = new ProductDatabase(); 
-            await db.init();  // Asegurarse de que la base de datos está lista
+            let errorCount = 0;
 
             for (let product of products) {
                 try {
+                    const barcodeKey = findKey(columnMappings.barcode, product);
+                    const descriptionKey = findKey(columnMappings.description, product);
+                    const stockKey = findKey(columnMappings.stock, product);
+                    const minStockKey = findKey(columnMappings.minStock, product);
+                    const purchasePriceKey = findKey(columnMappings.purchasePrice, product);
+                    const salePriceKey = findKey(columnMappings.salePrice, product);
+
+                    if (!barcodeKey || !product[barcodeKey]) {
+                        console.warn('Producto sin código de barras válido:', product);
+                        errorCount++;
+                        continue;
+                    }
+
                     const newProduct = {
-                        barcode: barcodeKey ? product[barcodeKey].toString() : '',
-                        description: descriptionKey ? product[descriptionKey] : '',
-                        stock: stockKey ? parseInt(product[stockKey] || '0') : 0,
-                        minStock: minStockKey ? parseInt(product[minStockKey] || '0') : 0,
-                        purchasePrice: purchasePriceKey ? parseFloat(product[purchasePriceKey] || '0') : 0,
-                        salePrice: salePriceKey ? parseFloat(product[salePriceKey] || '0') : 0
+                        barcode: product[barcodeKey].toString().trim(),
+                        description: descriptionKey ? product[descriptionKey].toString().trim() : '',
+                        stock: stockKey ? parseInt(product[stockKey]) || 0 : 0,
+                        minStock: minStockKey ? parseInt(product[minStockKey]) || 0 : 0,
+                        purchasePrice: purchasePriceKey ? parseFloat(product[purchasePriceKey]) || 0 : 0,
+                        salePrice: salePriceKey ? parseFloat(product[salePriceKey]) || 0 : 0
                     };
 
-                    // Verificar los datos del producto antes de agregar
-                    console.log('Producto a agregar:', newProduct);
+                    // Validación adicional
+                    if (newProduct.barcode === '' || isNaN(newProduct.stock) || isNaN(newProduct.minStock) || 
+                        isNaN(newProduct.purchasePrice) || isNaN(newProduct.salePrice)) {
+                        throw new Error('Datos inválidos para el producto');
+                    }
 
-                    await db.addProduct(newProduct); // Intentar agregar a la base de datos
-
+                    await db.addProduct(newProduct);
                     console.log('Producto agregado correctamente:', newProduct);
                     importedCount++;
                 } catch (error) {
                     console.error('Error al agregar producto:', product, error);
+                    errorCount++;
                 }
             }
 
-            showToast(`${importedCount} productos importados correctamente.`);
+            showToast(`Importación completada. ${importedCount} productos importados. ${errorCount} errores.`);
         } catch (error) {
             console.error('Error durante la importación:', error);
             showToast('Error durante la importación. Revisa la consola para más detalles.');
@@ -506,7 +526,6 @@ fileInput.addEventListener('change', async (e) => {
 
     reader.readAsArrayBuffer(file);
 });
-
 
     document.getElementById('export-button').addEventListener('click', async () => {
         const allProducts = await db.getAllProducts();
