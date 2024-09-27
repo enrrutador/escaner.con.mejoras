@@ -434,41 +434,44 @@ fileInput.addEventListener('change', async (e) => {
             const worksheet = workbook.Sheets[firstSheetName];
             const products = XLSX.utils.sheet_to_json(worksheet);
 
-            // Asegurarse de que el archivo fue leído y mostrar los productos
             console.log('Productos leídos del archivo:', products);
 
-            // Imprimir nombres de columnas para verificar
-            if (products.length > 0) {
-                console.log('Nombres de columnas en el archivo:', Object.keys(products[0]));
+            // Asumiendo que hay al menos una fila, obtener las claves dinámicamente
+            const firstProduct = products[0];
+
+            // Definir los posibles nombres de columna para cada campo
+            const columnMappings = {
+                barcode: ['Código de barras', 'Codigo de Barras', 'codigo de barras', 'barcode', 'Barcode'],
+                description: ['Descripción', 'Descripcion', 'descripcion', 'description', 'Description'],
+                stock: ['Stock', 'stock'],
+                minStock: ['Stock Mínimo', 'Stock minimo', 'stock minimo', 'min stock'],
+                purchasePrice: ['Precio de Compra', 'precio de compra', 'purchase price', 'Purchase Price'],
+                salePrice: ['Precio de Venta', 'precio de venta', 'sale price', 'Sale Price']
+            };
+
+            // Función auxiliar para buscar la clave correcta
+            const findKey = (possibleKeys) => {
+                return possibleKeys.find(key => firstProduct.hasOwnProperty(key));
+            };
+
+            // Buscar las claves correctas en el archivo
+            const barcodeKey = findKey(columnMappings.barcode);
+            const descriptionKey = findKey(columnMappings.description);
+            const stockKey = findKey(columnMappings.stock);
+            const minStockKey = findKey(columnMappings.minStock);
+            const purchasePriceKey = findKey(columnMappings.purchasePrice);
+            const salePriceKey = findKey(columnMappings.salePrice);
+
+            // Verificar si las claves se encontraron
+            if (!barcodeKey || !descriptionKey || !stockKey) {
+                showToast('El archivo no tiene las columnas necesarias.');
+                return;
             }
 
             let importedCount = 0;
 
             // Procesar cada producto
             for (let product of products) {
-                console.log('Procesando producto:', product);
-                
-                // Función auxiliar para buscar la clave correcta
-                const findKey = (possibleKeys) => {
-                    return possibleKeys.find(key => product.hasOwnProperty(key));
-                };
-
-                // Buscar las claves correctas en el archivo
-                const barcodeKey = findKey(['Código de barras', 'Codigo de Barras', 'codigo de barras', 'barcode', 'Barcode']);
-                const descriptionKey = findKey(['Descripción', 'Descripcion', 'descripcion', 'description', 'Description']);
-                const stockKey = findKey(['Stock', 'stock']);
-                const minStockKey = findKey(['Stock Mínimo', 'Stock minimo', 'stock minimo', 'min stock']);
-                const purchasePriceKey = findKey(['Precio de Compra', 'precio de compra', 'purchase price', 'Purchase Price']);
-                const salePriceKey = findKey(['Precio de Venta', 'precio de venta', 'sale price', 'Sale Price']);
-
-                // Verificar si el código de barras fue encontrado
-                console.log('Clave de Código de Barras:', barcodeKey);
-
-                if (!barcodeKey) {
-                    console.warn('Producto sin código de barras:', product);
-                    continue; // Si no tiene código de barras, ignorar el producto
-                }
-
                 try {
                     const newProduct = {
                         barcode: product[barcodeKey].toString(),
@@ -477,21 +480,15 @@ fileInput.addEventListener('change', async (e) => {
                         minStock: parseInt(product[minStockKey] || '0'),
                         purchasePrice: parseFloat(product[purchasePriceKey] || '0'),
                         salePrice: parseFloat(product[salePriceKey] || '0')
-                        // Eliminamos la propiedad `image` ya que el archivo no tiene esa columna
                     };
-
-                    // Verificar si se está creando el objeto correctamente
-                    console.log('Nuevo producto creado:', newProduct);
 
                     await db.addProduct(newProduct); // Agregar a la base de datos
                     importedCount++;
-                    console.log('Producto agregado con éxito');
                 } catch (error) {
                     console.error('Error al agregar producto:', product, error);
                 }
             }
 
-            console.log(`${importedCount} productos importados correctamente.`);
             showToast(`${importedCount} productos importados correctamente.`);
         } catch (error) {
             console.error('Error durante la importación:', error);
