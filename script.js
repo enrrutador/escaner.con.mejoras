@@ -439,7 +439,6 @@ fileInput.addEventListener('change', async (e) => {
             // Asumiendo que hay al menos una fila, obtener las claves dinámicamente
             const firstProduct = products[0];
 
-            // Definir los posibles nombres de columna para cada campo prioritario
             const columnMappings = {
                 barcode: ['Código de barras', 'Codigo de Barras', 'codigo de barras', 'barcode', 'Barcode'],
                 description: ['Descripción', 'Descripcion', 'descripcion', 'description', 'Description'],
@@ -449,12 +448,10 @@ fileInput.addEventListener('change', async (e) => {
                 salePrice: ['Precio de Venta', 'precio de venta', 'sale price', 'Sale Price']
             };
 
-            // Función auxiliar para buscar la clave correcta
             const findKey = (possibleKeys) => {
                 return possibleKeys.find(key => firstProduct.hasOwnProperty(key));
             };
 
-            // Buscar las claves correctas en el archivo
             const barcodeKey = findKey(columnMappings.barcode);
             const descriptionKey = findKey(columnMappings.description);
             const stockKey = findKey(columnMappings.stock);
@@ -462,26 +459,20 @@ fileInput.addEventListener('change', async (e) => {
             const purchasePriceKey = findKey(columnMappings.purchasePrice);
             const salePriceKey = findKey(columnMappings.salePrice);
 
-            // Informar de las columnas faltantes pero continuar
             if (!barcodeKey) {
                 console.warn('Falta la columna "Código de Barras". No se podrán identificar los productos.');
             }
 
-            if (!descriptionKey) {
-                console.warn('Falta la columna "Descripción".');
-            }
-
-            if (!stockKey) {
-                console.warn('Falta la columna "Stock".');
-            }
-
             let importedCount = 0;
 
-            // Procesar cada producto
+            // Inicializar la base de datos antes de agregar productos
+            const db = new ProductDatabase(); 
+            await db.init();  // Asegurarse de que la base de datos está lista
+
             for (let product of products) {
                 try {
                     const newProduct = {
-                        barcode: barcodeKey ? product[barcodeKey].toString() : '', // Si no está, se deja vacío
+                        barcode: barcodeKey ? product[barcodeKey].toString() : '',
                         description: descriptionKey ? product[descriptionKey] : '',
                         stock: stockKey ? parseInt(product[stockKey] || '0') : 0,
                         minStock: minStockKey ? parseInt(product[minStockKey] || '0') : 0,
@@ -489,9 +480,12 @@ fileInput.addEventListener('change', async (e) => {
                         salePrice: salePriceKey ? parseFloat(product[salePriceKey] || '0') : 0
                     };
 
-                    console.log('Nuevo producto creado:', newProduct);
+                    // Verificar los datos del producto antes de agregar
+                    console.log('Producto a agregar:', newProduct);
 
-                    await db.addProduct(newProduct); // Agregar a la base de datos
+                    await db.addProduct(newProduct); // Intentar agregar a la base de datos
+
+                    console.log('Producto agregado correctamente:', newProduct);
                     importedCount++;
                 } catch (error) {
                     console.error('Error al agregar producto:', product, error);
