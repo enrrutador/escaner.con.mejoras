@@ -417,6 +417,73 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.location.href = 'low_stock.html'; // Redirige a la página de productos con stock bajo
     });
 
+  document.getElementById('import-button').addEventListener('click', () => {
+    const fileInput = document.getElementById('fileInput');
+    fileInput.click();
+});
+
+document.getElementById('fileInput').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) {
+        importExcel(file);
+    }
+});
+
+async function importExcel(file) {
+    const reader = new FileReader();
+
+    reader.onload = async (e) => {
+        try {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, {type: 'array'});
+            const firstSheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[firstSheetName];
+            const products = XLSX.utils.sheet_to_json(worksheet);
+
+            // Mapeo flexible de columnas
+            const columnMappings = {
+                barcode: ['Código de Barras', 'Codigo de Barras', 'barcode', 'Barcode'],
+                description: ['Descripción', 'Descripcion', 'description', 'Description'],
+                stock: ['Stock', 'stock'],
+                minStock: ['Stock Mínimo', 'Stock minimo', 'min stock'],
+                purchasePrice: ['Precio de Compra', 'precio de compra', 'Purchase Price'],
+                salePrice: ['Precio de Venta', 'precio de venta', 'Sale Price']
+            };
+
+            const findKey = (product, possibleKeys) => {
+                return possibleKeys.find(key => product.hasOwnProperty(key));
+            };
+
+            const importedProducts = products.map(product => {
+                const barcodeKey = findKey(product, columnMappings.barcode);
+                const descriptionKey = findKey(product, columnMappings.description);
+                const stockKey = findKey(product, columnMappings.stock);
+                const minStockKey = findKey(product, columnMappings.minStock);
+                const purchasePriceKey = findKey(product, columnMappings.purchasePrice);
+                const salePriceKey = findKey(product, columnMappings.salePrice);
+
+                return {
+                    barcode: barcodeKey ? product[barcodeKey].toString() : '',
+                    description: descriptionKey ? product[descriptionKey] : '',
+                    stock: stockKey ? parseInt(product[stockKey] || '0') : 0,
+                    minStock: minStockKey ? parseInt(product[minStockKey] || '0') : 0,
+                    purchasePrice: purchasePriceKey ? parseFloat(product[purchasePriceKey] || '0') : 0,
+                    salePrice: salePriceKey ? parseFloat(product[salePriceKey] || '0') : 0
+                };
+            });
+
+            console.log('Productos importados:', importedProducts);
+            // Aquí puedes añadir la lógica para almacenar los productos en la base de datos.
+
+        } catch (error) {
+            console.error('Error durante la importación:', error);
+        }
+    };
+
+    reader.readAsArrayBuffer(file);
+}
+
+
     document.getElementById('export-button').addEventListener('click', async () => {
         const allProducts = await db.getAllProducts();
         const worksheet = XLSX.utils.json_to_sheet(allProducts.map(product => ({
