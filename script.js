@@ -254,135 +254,166 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
-    // Función para iniciar el escáner de códigos de barras
-    async function startScanner() {
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-            video.srcObject = stream;
-            scannerContainer.style.display = 'flex';
-            video.play();
-            scan();
-        } catch (error) {
-            showToast('Error accediendo a la cámara. Asegúrate de que tu navegador tiene permiso para usar la cámara.');
-        }
-    }
+    const video = document.getElementById('video');
+const scannerContainer = document.getElementById('scanner-container');
+const barcodeInput = document.getElementById('barcodeInput');
+const descriptionInput = document.getElementById('descriptionInput');
+const stockInput = document.getElementById('stockInput');
+const minStockInput = document.getElementById('minStockInput');
+const purchasePriceInput = document.getElementById('purchasePriceInput');
+const salePriceInput = document.getElementById('salePriceInput');
+const productImage = document.getElementById('productImage');
 
-    async function scan() {
-        if (barcodeDetector && video.readyState === video.HAVE_ENOUGH_DATA) {
-            const barcodes = await barcodeDetector.detect(video);
-            if (barcodes.length > 0) {
-                barcodeInput.value = barcodes[0].rawValue;
-                stopScanner();
-                searchProduct(barcodes[0].rawValue);
-            }
-        }
-        requestAnimationFrame(scan);
-    }
+let productNotFoundAlertShown = false;
 
-    function stopScanner() {
-        video.srcObject.getTracks().forEach(track => track.stop());
-        scannerContainer.style.display = 'none';
-    }
-
-    // Búsqueda solo al presionar el botón de "Buscar"
-    document.getElementById('search-button').addEventListener('click', () => {
-        const query = barcodeInput.value.trim() || descriptionInput.value.trim();
-        if (query) {
-            searchProduct(query);
-        } else {
-            showToast('Por favor, introduce un código de barras o nombre de producto para buscar.');
-        }
-    });
-
-    // Función para buscar productos
-    async function searchProduct(query) {
-        console.log('Iniciando búsqueda del producto:', query); // Depuración
-
-        const isBarcode = /^[\w-]+$/.test(query); // Modificado para aceptar letras, números y guiones
-        let product;
-
-        if (isBarcode) {
-            console.log('Buscando por código de barras en IndexedDB...');
-            product = await db.getProduct(query);
-            console.log('Resultado de la búsqueda local:', product);
-        }
-
-        if (!product) {
-            console.log('Buscando en OpenFoodFacts...');
-            product = await searchInOpenFoodFacts(query);
-            console.log('Resultado de OpenFoodFacts:', product);
-        }
-
-        if (product) {
-            cache.set(query, product);
-            fillForm(product);
-            console.log('Producto encontrado y formulario llenado.');
-            productNotFoundAlertShown = false;
-        } else {
-            if (!productNotFoundAlertShown) {
-                showToast('Producto no encontrado.');
-                productNotFoundAlertShown = true;
-            }
-        }
-    }
-
-    async function searchInOpenFoodFacts(query) {
-        try {
-            const response = await fetch(`https://world.openfoodfacts.org/api/v0/product/${query}.json`);
-            const data = await response.json();
-
-            if (data.product) {
-                const product = {
-                    barcode: data.product.code,
-                    description: data.product.product_name || 'Sin nombre',
-                    stock: 0,
-                    minStock: 0,
-                    purchasePrice: 0,
-                    salePrice: 0,
-                    image: data.product.image_url || ''
-                };
-
-                await db.addProduct(product); // Guardar en la base de datos local
-                return product;
-            }
-        } catch (error) {
-            console.error('Error al buscar en OpenFoodFacts:', error);
-        }
-        return null;
-    }
-
-    function fillForm(product) {
-        barcodeInput.value = product.barcode || '';
-        descriptionInput.value = product.description || '';
-        stockInput.value = product.stock || '';
-        minStockInput.value = product.minStock || '';
-        purchasePriceInput.value = product.purchasePrice || '';
-        salePriceInput.value = product.salePrice || '';
-
-        // Verifica si el elemento de imagen existe y si hay una imagen disponible
-        if (productImage && product.image) {
-            productImage.src = product.image;
-            productImage.style.display = 'block';
-        } else if (productImage) {
-            productImage.style.display = 'none';
-        }
-    }
-
-    document.getElementById('scan-button').addEventListener('click', async () => {
-        if (!('BarcodeDetector' in window)) {
-            showToast('No soportada en este navegador.');
-            return;
-        }
-
-if (!barcodeDetector) {
-    barcodeDetector = new BarcodeDetector({
-        formats: ['ean_13','ean_8','upc_a','upc_e','code_128','code_39','itf']
-           
-                 });
+// Función para iniciar el escáner de códigos de barras
+function startScanner() {
+    scannerContainer.style.display = 'flex';
+    Quagga.start();
 }
 
-        startScanner();
+// Detener el escáner
+function stopScanner() {
+    Quagga.stop();
+    scannerContainer.style.display = 'none';
+}
+
+// Función para buscar productos
+async function searchProduct(query) {
+    console.log('Iniciando búsqueda del producto:', query);
+
+    const isBarcode = /^[\w-]+$/.test(query);
+    let product;
+
+    if (isBarcode) {
+        console.log('Buscando por código de barras en IndexedDB...');
+        product = await db.getProduct(query);
+        console.log('Resultado de la búsqueda local:', product);
+    }
+
+    if (!product) {
+        console.log('Buscando en OpenFoodFacts...');
+        product = await searchInOpenFoodFacts(query);
+        console.log('Resultado de OpenFoodFacts:', product);
+    }
+
+    if (product) {
+        cache.set(query, product);
+        fillForm(product);
+        console.log('Producto encontrado y formulario llenado.');
+        productNotFoundAlertShown = false;
+    } else {
+        if (!productNotFoundAlertShown) {
+            showToast('Producto no encontrado.');
+            productNotFoundAlertShown = true;
+        }
+    }
+}
+
+// Función para buscar en OpenFoodFacts
+async function searchInOpenFoodFacts(query) {
+    try {
+        const response = await fetch(`https://world.openfoodfacts.org/api/v0/product/${query}.json`);
+        const data = await response.json();
+
+        if (data.product) {
+            const product = {
+                barcode: data.product.code,
+                description: data.product.product_name || 'Sin nombre',
+                stock: 0,
+                minStock: 0,
+                purchasePrice: 0,
+                salePrice: 0,
+                image: data.product.image_url || ''
+            };
+
+            await db.addProduct(product); // Guardar en la base de datos local
+            return product;
+        }
+    } catch (error) {
+        console.error('Error al buscar en OpenFoodFacts:', error);
+    }
+    return null;
+}
+
+// Función para llenar el formulario con los datos del producto
+function fillForm(product) {
+    barcodeInput.value = product.barcode || '';
+    descriptionInput.value = product.description || '';
+    stockInput.value = product.stock || '';
+    minStockInput.value = product.minStock || '';
+    purchasePriceInput.value = product.purchasePrice || '';
+    salePriceInput.value = product.salePrice || '';
+
+    if (productImage && product.image) {
+        productImage.src = product.image;
+        productImage.style.display = 'block';
+    } else if (productImage) {
+        productImage.style.display = 'none';
+    }
+}
+
+// Escuchar el botón de escanear
+document.getElementById('scan-button').addEventListener('click', () => {
+    startScanner();
+    initQuagga(); // Llama a la función que inicia Quagga
+});
+
+// Inicializa Quagga
+function initQuagga() {
+    Quagga.init({
+        inputStream: {
+            name: "Live",
+            type: "LiveStream",
+            target: video,
+            constraints: {
+                facingMode: "environment" // Usa la cámara trasera
+            },
+        },
+        decoder: {
+            readers: [
+                "ean_reader",
+                "ean_8_reader",
+                "upc_reader",
+                "upc_e_reader",
+                "code_39_reader",
+                "code_128_reader",
+                "itf_reader",
+                "codabar_reader",
+                "pdf417_reader",
+                "data_matrix_reader",
+                "aztec_reader",
+                "maxi_code_reader",
+                "gs1_databar_reader"
+            ]
+        }
+    }, function(err) {
+        if (err) {
+            console.error(err);
+            return;
+        }
+        console.log("Quagga initialized");
+        Quagga.start();
+
+        // Manejar el resultado del escaneo
+        Quagga.onDetected(function(data) {
+            const code = data.codeResult.code;
+            barcodeInput.value = code; // Establecer el valor del código en el input
+            stopScanner(); // Detener el escáner
+            searchProduct(code); // Buscar el producto con el código detectado
+        });
     });
+}
+
+// Búsqueda solo al presionar el botón de "Buscar"
+document.getElementById('search-button').addEventListener('click', () => {
+    const query = barcodeInput.value.trim() || descriptionInput.value.trim();
+    if (query) {
+        searchProduct(query);
+    } else {
+        showToast('Por favor, introduce un código de barras o nombre de producto para buscar.');
+    }
+});
 
     document.getElementById('save-button').addEventListener('click', async () => {
         const product = {
