@@ -311,16 +311,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // Iniciar el escáner
-    const startScannerButton = document.getElementById('start-scanner');
-    if (startScannerButton) {
-        startScannerButton.addEventListener('click', () => {
-            scannerContainer.style.display = 'block';
-            initQuagga();
-        });
-    } else {
-        console.error('Elemento start-scanner no encontrado en el DOM.');
-    }
+// Iniciar el escáner
+const scanButton = document.getElementById('scan-button');  // Cambiado a 'scan-button'
+if (scanButton) {
+    scanButton.addEventListener('click', () => {
+        scannerContainer.style.display = 'block';
+        initQuagga();
+    });
+} else {
+    console.error('Elemento scan-button no encontrado en el DOM.');
+}
+
 
     // Detener el escáner
     const stopScannerButton = document.getElementById('stop-scanner');
