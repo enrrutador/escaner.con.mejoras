@@ -222,6 +222,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     let productNotFoundAlertShown = false;
 
     const cache = new Map();
+    const scannedBarcodes = new Set(); // Almacenar códigos ya escaneados
 
     // Implementación de búsqueda difusa con Fuse.js y autocompletado
     descriptionInput.addEventListener('input', async (e) => {
@@ -263,49 +264,48 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // Inicializar ZXing
-   // Inicializar ZXing
-const codeReader = new ZXing.BrowserMultiFormatReader();
+    const codeReader = new ZXing.BrowserMultiFormatReader();
 
-// Iniciar escáner al hacer clic en el botón
-const scanButton = document.getElementById('scan-button');
-scanButton.addEventListener('click', () => {
-    scannerContainer.style.display = 'block';
-    console.log("Mostrando el contenedor de la cámara");
+    // Iniciar escáner al hacer clic en el botón
+    const scanButton = document.getElementById('scan-button');
+    scanButton.addEventListener('click', () => {
+        scannerContainer.style.display = 'block';
+        console.log("Mostrando el contenedor de la cámara");
 
-    // Comenzar a escanear con ZXing
-    codeReader.decodeFromVideoDevice(null, video, (result, err) => {
-        if (result) {
-            if (scannedBarcodes.has(result.text)) return; // Ignorar si ya ha sido escaneado
-            scannedBarcodes.add(result.text);
-            console.log(result);
-            barcodeInput.value = result.text; // Actualiza el campo con el resultado
+        // Comenzar a escanear con ZXing
+        codeReader.decodeFromVideoDevice(null, video, (result, err) => {
+            if (result) {
+                // Verificar si ya se ha escaneado este código
+                if (scannedBarcodes.has(result.text)) return; 
+                scannedBarcodes.add(result.text);
+                console.log(result);
+                barcodeInput.value = result.text; // Actualiza el campo con el resultado
 
-            // Buscar producto en la base de datos
-            db.getProduct(result.text).then((product) => {
-                if (product) {
-                    populateProductFields(product);
-                } else {
-                    showToast('Producto no encontrado.');
-                    productNotFoundAlertShown = true;
-                }
-            }).catch((error) => {
-                console.error('Error al buscar producto:', error);
-                showToast('Error al buscar producto en la base de datos.');
-            });
-        }
-        if (err && !(err instanceof ZXing.NotFoundException)) {
-            console.error(err);
-        }
+                // Buscar producto en la base de datos
+                db.getProduct(result.text).then((product) => {
+                    if (product) {
+                        populateProductFields(product);
+                    } else {
+                        showToast('Producto no encontrado.');
+                        productNotFoundAlertShown = true;
+                    }
+                }).catch((error) => {
+                    console.error('Error al buscar producto:', error);
+                    showToast('Error al buscar producto en la base de datos.');
+                });
+            }
+            if (err && !(err instanceof ZXing.NotFoundException)) {
+                console.error(err);
+            }
+        });
     });
-});
 
-// Detener el escáner
-const stopScannerButton = document.getElementById('stop-scanner');
-stopScannerButton.addEventListener('click', () => {
-    scannerContainer.style.display = 'none';
-    codeReader.reset(); // Detener el escáner de ZXing
-});
-
+    // Detener el escáner
+    const stopScannerButton = document.getElementById('stop-scanner');
+    stopScannerButton.addEventListener('click', () => {
+        scannerContainer.style.display = 'none';
+        codeReader.reset(); // Detener el escáner de ZXing
+    });
 
     // Guardar producto
     const saveButton = document.getElementById('save-button');
