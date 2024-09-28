@@ -12,9 +12,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>M-Scanner 2.0</title>
     <link rel="stylesheet" href="styles.css">
-  
-
-
 </head>
 <body>
     <div id="login-container" class="login-container">
@@ -35,7 +32,7 @@
         <!-- Sección de escaneo -->
         <div class="scanner-section">
             <button id="scan-button" class="action-button">Escanear Código de Barras</button>
-            <button id="search-button" class="action-button">Buscar Producto</button>
+            <button id="stop-scanner" class="action-button">Detener Escáner</button> <!-- Botón para detener el escáner -->
             <input type="text" id="barcode" placeholder="Código de Barras">
         </div>
 
@@ -48,9 +45,9 @@
             <input type="number" id="purchase-price" placeholder="Precio de Compra">
             <input type="number" id="sale-price" placeholder="Precio de Venta">
             <input type="file" id="fileInput" accept=".xlsx, .xls" style="display: none;">
-
         </div>
 
+        <!-- Botones de acciones -->
         <div class="action-section">
             <button id="save-button" class="action-button">Guardar</button>
             <button id="clear-button" class="action-button">Borrar</button>
@@ -60,11 +57,11 @@
         </div>
 
         <!-- Video del escáner -->
-<div id="scanner-container" style="display: none;">
-    <video id="video"></video>
-</div>
+        <div id="scanner-container" style="display: none;">
+            <video id="video"></video>
+        </div>
 
-
+        <!-- Resultados de stock bajo -->
         <div id="low-stock-results" class="results-section low-stock-results" style="display: none;">
             <h2>Productos con Stock Bajo</h2>
             <ul id="low-stock-list"></ul>
@@ -74,9 +71,9 @@
     <!-- Contenedor de mensajes -->
     <div id="toast" class="toast"></div>
 
-   <!-- Incluye la biblioteca quagga-->
+    <!-- Incluye la biblioteca quagga -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
-  
+
     <!-- Incluir Fuse.js para búsqueda difusa -->
     <script src="https://cdn.jsdelivr.net/npm/fuse.js/dist/fuse.js"></script>
 
