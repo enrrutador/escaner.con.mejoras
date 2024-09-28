@@ -272,25 +272,23 @@ function initQuagga() {
             type: "LiveStream",
             target: video, // Elemento de video
             constraints: {
-                facingMode: "environment", // Cámara trasera
-                width: 640, // Aumentar la resolución
-                height: 480 // Aumentar la resolución
+                facingMode: "environment" // Cámara trasera
             },
-            area: { // Proporción del área a escanear
-                top: "0%",    
-                right: "0%",  
-                left: "0%",   
-                bottom: "0%"  
+            area: { // Limitar el área de escaneo (ajusta según tu necesidad)
+                top: "0%", 
+                right: "0%", 
+                left: "0%", 
+                bottom: "0%"
             }
         },
         decoder: {
             readers: [
-                "ean_reader", // Solo el lector EAN
+                "ean_reader" // Mantén solo el lector necesario
             ]
         },
         locator: {
-            patchSize: "medium",
-            halfSample: true
+            patchSize: "small", // Cambia a "small" para mejorar la velocidad
+            halfSample: true     // Mantener medio muestreo
         }
     }, (err) => {
         if (err) {
@@ -308,15 +306,10 @@ function initQuagga() {
             const barcode = result.codeResult.code;
             barcodeInput.value = barcode;
 
-            // Evitar múltiples lecturas
-            Quagga.stop(); // Detener la detección temporalmente
+            // Solo procesa una detección y detiene temporalmente
+            Quagga.stop(); 
 
-            // Esperar un momento antes de reiniciar Quagga
-            setTimeout(() => {
-                Quagga.start(); // Reiniciar la detección
-            }, 1000); // Ajusta el tiempo según tus necesidades
-
-            // Buscar producto en la base de datos local
+            // Proceso de búsqueda en la base de datos
             db.getProduct(barcode).then((product) => {
                 if (product) {
                     populateProductFields(product);
@@ -328,9 +321,15 @@ function initQuagga() {
                 console.error('Error al buscar producto:', error);
                 showToast('Error al buscar producto en la base de datos.');
             });
+
+            // Reinicia Quagga después de un breve retraso
+            setTimeout(() => {
+                Quagga.start(); // Reiniciar la detección después de un tiempo
+            }, 1500); // Aumentar el tiempo para evitar detecciones rápidas
         }
     });
 }
+
 
     // Iniciar el escáner con permisos de cámara
     const scanButton = document.getElementById('scan-button');
