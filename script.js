@@ -361,4 +361,4 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     reader.readAsArrayBuffer(file);
-});
+})
