@@ -374,10 +374,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
 
- if (!barcodeDetector) {
-            barcodeDetector = new BarcodeDetector({ formats: ['ean_13'],['ean_8'] });
-        }
-
+if (!barcodeDetector) {
+    barcodeDetector = new BarcodeDetector({
+        formats: ['ean_13', 'ean_8']
+    });
+}
 
         startScanner();
     });
