@@ -212,9 +212,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const descriptionInput = document.getElementById('description');
     const stockInput = document.getElementById('stock');
     const minStockInput = document.getElementById('min-stock');
-    const purchasePriceInput = document.getElementById('purchase-price');
-    const salePriceInput = document.getElementById('sale-price');
-    const productImage = document.getElementById('product-image');
+   
     const scannerContainer = document.getElementById('scanner-container');
     
     const lowStockButton = document.getElementById('low-stock-button');
@@ -255,11 +253,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
 const video = document.getElementById('video');
-const scannerContainer = document.getElementById('scanner-container');
-const barcodeInput = document.getElementById('barcodeInput');
-const descriptionInput = document.getElementById('descriptionInput');
-const stockInput = document.getElementById('stockInput');
-const minStockInput = document.getElementById('minStockInput');
+
+
 const purchasePriceInput = document.getElementById('purchasePriceInput');
 const salePriceInput = document.getElementById('salePriceInput');
 const productImage = document.getElementById('productImage');
