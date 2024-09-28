@@ -203,118 +203,55 @@ function normalizeText(text) {
         .replace(/[\u0300-\u036f]/g, '');
 }
 
-// Manejo del escáner de productos y la búsqueda
-document.addEventListener('DOMContentLoaded', async () => {
-    const db = new ProductDatabase();
-    await db.init();
+import Quagga from 'quagga';  // Asegúrate de tener Quagga instalado
 
-    const barcodeInput = document.getElementById('barcode');
-    const descriptionInput = document.getElementById('description');
-    const stockInput = document.getElementById('stock');
-    const minStockInput = document.getElementById('min-stock');
-    const purchasePriceInput = document.getElementById('purchasePriceInput');
-    const salePriceInput = document.getElementById('salePriceInput');
-    const productImage = document.getElementById('productImage');
-    const scannerContainer = document.getElementById('scanner-container');
-    const lowStockButton = document.getElementById('low-stock-button');
-    const fileInput = document.getElementById('fileInput');
-    const video = document.getElementById('video');
-    let barcodeDetector;
-    let productNotFoundAlertShown = false;
-
-    const cache = new Map();
-
-    // Implementación de búsqueda difusa con Fuse.js y autocompletado
-    descriptionInput.addEventListener('input', async (e) => {
-        const query = e.target.value.trim();
-        const suggestions = document.getElementById('suggestions');
-        suggestions.innerHTML = ''; // Limpiar las sugerencias previas
-
-        if (query) {
-            const allProducts = await db.getAllProducts(); // Obtener todos los productos
-            const fuse = new Fuse(allProducts, { keys: ['description'], threshold: 0.4 });
-            const results = fuse.search(query); // Realiza la búsqueda difusa
-
-            // Agregar las sugerencias al datalist
-            results.forEach(result => {
-                const option = document.createElement('option');
-                option.value = result.item.description;
-                suggestions.appendChild(option);
-            });
-        }
-    });
-
-    // Evitar búsqueda automática al seleccionar una opción de autocompletado
-    descriptionInput.addEventListener('change', async (e) => {
-        const selectedDescription = e.target.value.trim();
-        const allProducts = await db.getAllProducts();
-        const selectedProduct = allProducts.find(product => product.description === selectedDescription);
-        if (selectedProduct) {
-            fillForm(selectedProduct); // Llenar el formulario con el producto seleccionado
-        }
-    });
-
-    // Función para iniciar el escáner de códigos de barras
-    function startScanner() {
-        scannerContainer.style.display = 'flex';
-        Quagga.start(); // Iniciar Quagga para el escaneo
-    }
-
-    // Detener el escáner
-    function stopScanner() {
-        Quagga.stop(); // Detener Quagga
-        scannerContainer.style.display = 'none';
-    }
-
-    // Función para buscar productos
-    async function searchProduct(query) {
-        console.log('Iniciando búsqueda del producto:', query);
-
-        const isBarcode = /^[\w-]+$/.test(query); // Validar si el query es un código de barras
-        let product;
-
-        if (isBarcode) {
-            console.log('Buscando por código de barras en IndexedDB...');
-            product = await db.getProduct(query);
-            console.log('Resultado de la búsqueda local:', product);
-        }
-
-        if (!product) {
-            console.log('Buscando en OpenFoodFacts...');
-            product = await searchInOpenFoodFacts(query);
-            console.log('Resultado de OpenFoodFacts:', product);
-        }
-
-        if (product) {
-            cache.set(query, product); // Cachear el producto
-            fillForm(product); // Llenar el formulario con los datos del producto
-            console.log('Producto encontrado y formulario llenado.');
-            productNotFoundAlertShown = false;
-        } else {
-            if (!productNotFoundAlertShown) {
-                showToast('Producto no encontrado.');
-                productNotFoundAlertShown = true;
+// Función para iniciar el escáner de códigos de barras con Quagga
+async function startScanner() {
+    try {
+        // Inicializar Quagga para escanear usando la cámara
+        Quagga.init({
+            inputStream: {
+                name: "Live",
+                type: "LiveStream",
+                target: document.querySelector('#video'), // Donde aparecerá el stream de video
+                constraints: {
+                    facingMode: "environment" // Usar la cámara trasera en móviles
+                }
+            },
+            decoder: {
+                readers: ["ean_reader"], // Tipo de código de barras que se quiere escanear (EAN)
             }
-        }
-    }
+        }, (err) => {
+            if (err) {
+                console.log(err);
+                showToast('Error iniciando el escáner');
+                return;
+            }
+            console.log("Escáner iniciado correctamente");
+            Quagga.start();
+        });
 
-    // Función para rellenar el formulario con los datos del producto
-    function fillForm(product) {
-        barcodeInput.value = product.barcode || '';
-        descriptionInput.value = product.description || '';
-        stockInput.value = product.stock || '';
-        minStockInput.value = product.minStock || '';
-        purchasePriceInput.value = product.purchasePrice || '';
-        salePriceInput.value = product.salePrice || '';
-
-        // Verifica si el elemento de imagen existe y si hay una imagen disponible
-        if (productImage && product.image) {
-            productImage.src = product.image;
-            productImage.style.display = 'block';
-        } else if (productImage) {
-            productImage.style.display = 'none';
-        }
+        // Procesar los resultados del escaneo
+        Quagga.onDetected((result) => {
+            if (result && result.codeResult && result.codeResult.code) {
+                const scannedCode = result.codeResult.code;
+                barcodeInput.value = scannedCode;  // Poner el código en el campo de input
+                stopScanner();
+                searchProduct(scannedCode);  // Buscar el producto en la base de datos
+            }
+        });
+    } catch (error) {
+        showToast('Error accediendo a la cámara. Asegúrate de que tu navegador tiene permiso para usar la cámara.');
     }
+}
+
+function stopScanner() {
+    Quagga.stop();  // Detener Quagga
+    scannerContainer.style.display = 'none';  // Ocultar el contenedor del escáner
+}
+
+document.getElementById('scan-button').addEventListener('click', async () => {
+    startScanner();  // Iniciar el escáner cuando se presiona el botón de escanear
 });
 
 // Función para buscar en OpenFoodFacts
