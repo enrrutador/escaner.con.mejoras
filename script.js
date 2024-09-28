@@ -312,48 +312,68 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // Iniciar el escáner
-    document.getElementById('start-scanner').addEventListener('click', () => {
-        scannerContainer.style.display = 'block';
-        initQuagga();
-    });
+    const startScannerButton = document.getElementById('start-scanner');
+    if (startScannerButton) {
+        startScannerButton.addEventListener('click', () => {
+            scannerContainer.style.display = 'block';
+            initQuagga();
+        });
+    } else {
+        console.error('Elemento start-scanner no encontrado en el DOM.');
+    }
 
     // Detener el escáner
-    document.getElementById('stop-scanner').addEventListener('click', () => {
-        scannerContainer.style.display = 'none';
-        Quagga.stop();
-    });
+    const stopScannerButton = document.getElementById('stop-scanner');
+    if (stopScannerButton) {
+        stopScannerButton.addEventListener('click', () => {
+            scannerContainer.style.display = 'none';
+            Quagga.stop();
+        });
+    } else {
+        console.error('Elemento stop-scanner no encontrado en el DOM.');
+    }
 
     // Guardar producto
-    document.getElementById('save-button').addEventListener('click', async () => {
-        const product = {
-            barcode: barcodeInput.value.trim(),
-            description: descriptionInput.value.trim(),
-            stock: parseFloat(stockInput.value.trim()),
-            minStock: parseFloat(minStockInput.value.trim()),
-            purchasePrice: parseFloat(purchasePriceInput.value.trim()),
-            salePrice: parseFloat(salePriceInput.value.trim()),
-            imageUrl: productImage.src
-        };
+    const saveButton = document.getElementById('save-button');
+    if (saveButton) {
+        saveButton.addEventListener('click', async () => {
+            const product = {
+                barcode: barcodeInput.value.trim(),
+                description: descriptionInput.value.trim(),
+                stock: parseFloat(stockInput.value.trim()),
+                minStock: parseFloat(minStockInput.value.trim()),
+                purchasePrice: parseFloat(purchasePriceInput.value.trim()),
+                salePrice: parseFloat(salePriceInput.value.trim()),
+                imageUrl: productImage.src
+            };
 
-        if (product.barcode === '') {
-            showToast('El código de barras es obligatorio.');
-            return;
-        }
+            if (product.barcode === '') {
+                showToast('El código de barras es obligatorio.');
+                return;
+            }
 
-        try {
-            await db.addProduct(product);
-            showToast('Producto guardado.');
-            clearFields();
-        } catch (error) {
-            console.error('Error al guardar el producto:', error);
-            showToast('Error al guardar el producto.');
-        }
-    });
+            try {
+                await db.addProduct(product);
+                showToast('Producto guardado.');
+                clearFields();
+            } catch (error) {
+                console.error('Error al guardar el producto:', error);
+                showToast('Error al guardar el producto.');
+            }
+        });
+    } else {
+        console.error('Elemento save-button no encontrado en el DOM.');
+    }
 
     // Borrar campos
-    document.getElementById('clear-button').addEventListener('click', () => {
-        clearFields();
-    });
+    const clearButton = document.getElementById('clear-button');
+    if (clearButton) {
+        clearButton.addEventListener('click', () => {
+            clearFields();
+        });
+    } else {
+        console.error('Elemento clear-button no encontrado en el DOM.');
+    }
 
     function clearFields() {
         barcodeInput.value = '';
@@ -365,6 +385,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         productImage.src = '';
         productImage.style.display = 'none';
     }
+});
 
     // Mostrar productos con stock bajo
     lowStockButton.addEventListener('click', async () => {
