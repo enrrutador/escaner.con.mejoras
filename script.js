@@ -264,27 +264,30 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // Inicializar y configurar QuaggaJS
-    function initQuagga() {
-        Quagga.init({
-            inputStream: {
-                name: 'Live',
-                type: 'LiveStream',
-                target: video,
-                constraints: {
-                    facingMode: 'environment' // Utilizar la cámara trasera
-                }
-            },
-            decoder: {
-                readers: ['ean_reader'] // Agrega más tipos de lectores según sea necesario
+   function initQuagga() {
+    Quagga.init({
+        inputStream: {
+            name: 'Live',
+            type: 'LiveStream',
+            target: video, // Elemento del video en tu HTML
+            constraints: {
+                facingMode: 'environment' // Usar la cámara trasera
             }
-        }, (err) => {
-            if (err) {
-                console.error('Error al iniciar Quagga:', err);
-                showToast('Error al iniciar el escáner de códigos de barras.');
-                return;
-            }
-            Quagga.start();
-        });
+        },
+        decoder: {
+            readers: ['ean_reader'] // Tipo de código a leer
+        }
+    }, (err) => {
+        if (err) {
+            console.error('Error al iniciar Quagga:', err);
+            showToast('No se pudo acceder a la cámara. Revisa los permisos.');
+            return;
+        }
+        Quagga.start();
+        console.log("Escáner iniciado correctamente");
+    });
+}
+
 
         // Manejador de detección
         Quagga.onDetected((result) => {
