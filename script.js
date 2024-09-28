@@ -264,29 +264,26 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // Inicializar Quagga
-    function initQuagga() {
+ function initQuagga() {
+    if (navigator.mediaDevices && typeof navigator.mediaDevices.getUserMedia === 'function') {
         Quagga.init({
             inputStream: {
                 name: "Live",
                 type: "LiveStream",
-                target: video,
+                target: document.querySelector('#scanner-container video'), // Asegúrate de que el video esté dentro del contenedor
                 constraints: {
-                    facingMode: "environment", // Cámara trasera
-                    width: { ideal: 1280 },  // Aumentar la resolución
-                    height: { ideal: 720 }    // Aumentar la resolución
-                }
+                    width: 640,
+                    height: 480,
+                    facingMode: "environment"
+                },
             },
             decoder: {
                 readers: [
-                    "ean_reader", // Solo EAN para mejorar la precisión
-                    "code_128_reader" // Agregar otros tipos según sea necesario
+                    "ean_reader",
+                    "code_128_reader"
                 ]
             },
-            locator: {
-                patchSize: "large", // Usar un tamaño de parche grande para mejorar la detección
-                halfSample: false    // Desactivar medio muestreo para mejor precisión
-            }
-        }, (err) => {
+        }, function(err) {
             if (err) {
                 console.error("Error al iniciar Quagga:", err);
                 showToast("Error al iniciar el escáner de códigos de barras.");
@@ -297,32 +294,60 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
 
         Quagga.onDetected((result) => {
-            if (result && result.codeResult && result.codeResult.code) {
-                const barcode = result.codeResult.code;
-                barcodeInput.value = barcode;
-
-                // Evitar múltiples lecturas
-                Quagga.stop(); // Detener la detección temporalmente
-
-                // Esperar un tiempo antes de reiniciar Quagga
-                setTimeout(() => {
-                    Quagga.start(); // Reiniciar la detección
-                }, 1000); // Ajustar el tiempo según tus necesidades
-
-                // Buscar producto en la base de datos
-                db.getProduct(barcode).then((product) => {
-                    if (product) {
-                        populateProductFields(product);
-                    } else {
-                        showToast('Producto no encontrado.');
-                    }
-                }).catch((error) => {
-                    console.error('Error al buscar producto:', error);
-                    showToast('Error al buscar producto en la base de datos.');
-                });
-            }
+            // ... (código de detección existente)
         });
+    } else {
+        console.error("getUserMedia no está soportado en este navegador");
+        showToast("La cámara no está disponible en este dispositivo.");
     }
+}
+
+// Modificar el evento del botón de escaneo
+const scanButton = document.getElementById('scan-button');
+scanButton.addEventListener('click', () => {
+    const scannerContainer = document.getElementById('scanner-container');
+    scannerContainer.style.display = 'block';
+    console.log("Mostrando el contenedor de la cámara");
+    initQuagga(); // Iniciar Quagga
+});
+
+// Modificar la función para hacer el contenedor arrastrable
+function makeElementDraggable(element) {
+    let isDragging = false;
+    let startX, startY;
+
+    element.addEventListener('mousedown', (e) => {
+        isDragging = true;
+        startX = e.clientX - element.offsetLeft;
+        startY = e.clientY - element.offsetTop;
+        element.style.cursor = 'grabbing';
+    });
+
+    document.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        let newX = e.clientX - startX;
+        let newY = e.clientY - startY;
+        
+        // Limitar el movimiento dentro de la ventana
+        newX = Math.max(0, Math.min(newX, window.innerWidth - element.offsetWidth));
+        newY = Math.max(0, Math.min(newY, window.innerHeight - element.offsetHeight));
+        
+        element.style.left = `${newX}px`;
+        element.style.top = `${newY}px`;
+    });
+
+    document.addEventListener('mouseup', () => {
+        isDragging = false;
+        element.style.cursor = 'grab';
+    });
+}
+
+// Asegúrate de que esta función se llame cuando el DOM esté cargado
+document.addEventListener('DOMContentLoaded', () => {
+    const scannerContainer = document.getElementById('scanner-container');
+    makeElementDraggable(scannerContainer);
+});
+
 
     // Iniciar escáner al hacer clic en el botón
     const scanButton = document.getElementById('scan-button');
@@ -471,37 +496,3 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 });
 
-// Función para hacer que el contenedor del escáner sea movible
-function makeElementDraggable(element) {
-    let isDragging = false;
-    let startX, startY, offsetX, offsetY;
-
-    element.addEventListener('mousedown', (e) => {
-        isDragging = true;
-        startX = e.clientX;
-        startY = e.clientY;
-        const rect = element.getBoundingClientRect();
-        offsetX = startX - rect.left;
-        offsetY = startY - rect.top;
-
-        element.style.cursor = 'grabbing'; // Cambiar cursor mientras se arrastra
-    });
-
-    document.addEventListener('mousemove', (e) => {
-        if (isDragging) {
-            element.style.left = `${e.clientX - offsetX}px`;
-            element.style.top = `${e.clientY - offsetY}px`;
-        }
-    });
-
-    document.addEventListener('mouseup', () => {
-        isDragging = false;
-        element.style.cursor = 'grab'; // Volver al cursor de agarre cuando se suelte
-    });
-}
-
-// Hacer que el contenedor del video sea arrastrable
-document.addEventListener('DOMContentLoaded', () => {
-    const scannerContainer = document.getElementById('scanner-container');
-    makeElementDraggable(scannerContainer);
-});
