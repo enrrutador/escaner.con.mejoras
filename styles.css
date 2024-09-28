@@ -296,21 +296,41 @@ input {
     visibility: visible;
 
 #scanner-container {
-    position: fixed; /* Posición fija para centrar en la pantalla */
+    position: fixed;
     top: 50%;
     left: 50%;
-    transform: translate(-50%, -50%); /* Centramos horizontal y verticalmente */
-    width: calc(360px * 1.2); /* Aumentar tamaño un 20% */
-    height: calc(240px * 1.2); /* Aumentar tamaño un 20% */
+    transform: translate(-50%, -50%);
+    width: 320px;
+    height: 240px;
     background-color: #fff;
     z-index: 1000;
-    border: 2px solid #000;
-}
-#video {
-    width: 100%; /* Tomar todo el ancho del contenedor */
-    height: 100%; /* Tomar todo el alto del contenedor */
-    border-radius: 10px; /* Opcional, si quieres bordes redondeados */
+    border: 2px solid #0288D1;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.5);
+    overflow: hidden;
 }
 
+#scanner-container video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+#stop-scanner {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background-color: #FF5722;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
 
 
