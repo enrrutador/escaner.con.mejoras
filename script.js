@@ -418,17 +418,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.location.href = 'low_stock.html'; // Redirige a la página de productos con stock bajo
     });
 
-// **Funcionalidad para importar productos desde un archivo Excel**
 document.getElementById('import-button').addEventListener('click', function() {
     const fileInput = document.createElement('input');
     fileInput.type = 'file';
     fileInput.accept = '.xlsx, .xls';
 
-    fileInput.addEventListener('change', function(event) {
+    fileInput.addEventListener('change', async function(event) {
         const file = event.target.files[0];
         const reader = new FileReader();
 
-        reader.onload = function(e) {
+        reader.onload = async function(e) {
             const data = new Uint8Array(e.target.result);
             const workbook = XLSX.read(data, { type: 'array' });
 
@@ -436,34 +435,25 @@ document.getElementById('import-button').addEventListener('click', function() {
             const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
             const importedData = XLSX.utils.sheet_to_json(firstSheet);
 
-            // Procesar y guardar los datos en localStorage
-            const products = JSON.parse(localStorage.getItem('products')) || [];
+            // Inicializar la base de datos de productos
+            const db = new ProductDatabase();
+            await db.init();
 
-            importedData.forEach(row => {
-                const existingProductIndex = products.findIndex(p => p.barcode === row['Codigo de Barras']);
-                
+            for (let row of importedData) {
                 const newProduct = {
-               barcode: row['Código de Barras'] || row['Codigo de Barras'] || row['codigo de barras'],
-               name: row['Nombre del Producto'] || row['Descripcion del Producto'] || row['Descripción del Producto'],
-               purchasePrice: parseFloat(row['Precio de Compra']) || null,
-               salePrice: parseFloat(row['Precio de Venta']) || null,
-               stock: parseInt(row['Stock']),
-               minimumStock: parseInt(row['Stock Mínimo'])
-               };
+                    barcode: row['Código de Barras'] || row['Codigo de Barras'] || row['codigo de barras'],
+                    description: row['Nombre del Producto'] || row['Descripcion del Producto'] || row['Descripción del Producto'],
+                    purchasePrice: parseFloat(row['Precio de Compra']) || 0,
+                    salePrice: parseFloat(row['Precio de Venta']) || 0,
+                    stock: parseInt(row['Stock']) || 0,
+                    minimumStock: parseInt(row['Stock Mínimo']) || 0
+                };
 
+                // Guardar o actualizar el producto en IndexedDB
+                await db.addProduct(newProduct);
+            }
 
-                if (existingProductIndex !== -1) {
-                    // Actualizar producto existente
-                    products[existingProductIndex] = newProduct;
-                } else {
-                    // Agregar nuevo producto
-                    products.push(newProduct);
-                }
-            });
-
-            // Guardar los productos actualizados en localStorage
-            localStorage.setItem('products', JSON.stringify(products));
-              alert('Productos importados correctamente.');
+            alert('Productos importados correctamente.');
         };
 
         reader.readAsArrayBuffer(file);
@@ -471,7 +461,6 @@ document.getElementById('import-button').addEventListener('click', function() {
 
     fileInput.click();
 });
-
 
 
     document.getElementById('export-button').addEventListener('click', async () => {
