@@ -263,48 +263,80 @@ document.addEventListener('DOMContentLoaded', async () => {
         productImage.style.display = product.imageUrl ? 'block' : 'none';
     }
 
-    // Inicializar ZXing
-    const codeReader = new ZXing.BrowserMultiFormatReader();
+    // Inicializar Quagga
+    function initQuagga() {
+        Quagga.init({
+            inputStream: {
+                name: "Live",
+                type: "LiveStream",
+                target: video,
+                constraints: {
+                    facingMode: "environment", // Cámara trasera
+                    width: { ideal: 1280 },  // Aumentar la resolución
+                    height: { ideal: 720 }    // Aumentar la resolución
+                }
+            },
+            decoder: {
+                readers: [
+                    "ean_reader", // Solo EAN para mejorar la precisión
+                    "code_128_reader" // Agregar otros tipos según sea necesario
+                ]
+            },
+            locator: {
+                patchSize: "large", // Usar un tamaño de parche grande para mejorar la detección
+                halfSample: false    // Desactivar medio muestreo para mejor precisión
+            }
+        }, (err) => {
+            if (err) {
+                console.error("Error al iniciar Quagga:", err);
+                showToast("Error al iniciar el escáner de códigos de barras.");
+                return;
+            }
+            console.log("Quagga iniciado correctamente");
+            Quagga.start();
+        });
 
-    // Iniciar escáner al hacer clic en el botón
-    const scanButton = document.getElementById('scan-button');
-    scanButton.addEventListener('click', () => {
-        scannerContainer.style.display = 'block';
-        console.log("Mostrando el contenedor de la cámara");
+        Quagga.onDetected((result) => {
+            if (result && result.codeResult && result.codeResult.code) {
+                const barcode = result.codeResult.code;
+                barcodeInput.value = barcode;
 
-        // Comenzar a escanear con ZXing
-        codeReader.decodeFromVideoDevice(null, video, (result, err) => {
-            if (result) {
-                // Verificar si ya se ha escaneado este código
-                if (scannedBarcodes.has(result.text)) return; 
-                scannedBarcodes.add(result.text);
-                console.log(result);
-                barcodeInput.value = result.text; // Actualiza el campo con el resultado
+                // Evitar múltiples lecturas
+                Quagga.stop(); // Detener la detección temporalmente
+
+                // Esperar un tiempo antes de reiniciar Quagga
+                setTimeout(() => {
+                    Quagga.start(); // Reiniciar la detección
+                }, 1000); // Ajustar el tiempo según tus necesidades
 
                 // Buscar producto en la base de datos
-                db.getProduct(result.text).then((product) => {
+                db.getProduct(barcode).then((product) => {
                     if (product) {
                         populateProductFields(product);
                     } else {
                         showToast('Producto no encontrado.');
-                        productNotFoundAlertShown = true;
                     }
                 }).catch((error) => {
                     console.error('Error al buscar producto:', error);
                     showToast('Error al buscar producto en la base de datos.');
                 });
             }
-            if (err && !(err instanceof ZXing.NotFoundException)) {
-                console.error(err);
-            }
         });
+    }
+
+    // Iniciar escáner al hacer clic en el botón
+    const scanButton = document.getElementById('scan-button');
+    scanButton.addEventListener('click', () => {
+        scannerContainer.style.display = 'block';
+        console.log("Mostrando el contenedor de la cámara");
+        initQuagga(); // Iniciar Quagga
     });
 
     // Detener el escáner
     const stopScannerButton = document.getElementById('stop-scanner');
     stopScannerButton.addEventListener('click', () => {
         scannerContainer.style.display = 'none';
-        codeReader.reset(); // Detener el escáner de ZXing
+        Quagga.stop(); // Detener el escáner de Quagga
     });
 
     // Guardar producto
