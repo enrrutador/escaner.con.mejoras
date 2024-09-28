@@ -200,153 +200,165 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Evento de cambio en el input de archivo para leer el archivo Excel
     fileInput.addEventListener('change', async (e) => {
-        console.log('Evento de cambio detectado en el input de archivo');
-        const file = e.target.files[0];
+    console.log('Evento de cambio detectado en el input de archivo');
+    const file = e.target.files[0];
 
-        if (!file) {
-            showToast('Por favor, selecciona un archivo para importar.');
-            return;
-        }
+    if (!file) {
+        showToast('Por favor, selecciona un archivo para importar.');
+        return;
+    }
 
-        console.log('Archivo seleccionado:', file.name);
-        const reader = new FileReader();
+    console.log('Archivo seleccionado:', file.name);
+    const reader = new FileReader();
 
-        reader.onload = async (e) => {
-            console.log('Leyendo archivo...');
-            try {
-                const data = new Uint8Array(e.target.result);
-                const workbook = XLSX.read(data, { type: 'array' });
-                const firstSheetName = workbook.SheetNames[0];
-                const worksheet = workbook.Sheets[firstSheetName];
-                const products = XLSX.utils.sheet_to_json(worksheet);
+    reader.onload = async (e) => {
+        console.log('Leyendo archivo...');
+        try {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+            const firstSheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[firstSheetName];
+            const products = XLSX.utils.sheet_to_json(worksheet);
 
-                console.log('Productos leídos del archivo:', products);
+            console.log('Productos leídos del archivo:', products);
 
-                if (products.length === 0) {
-                    showToast('El archivo está vacío o no contiene datos válidos.');
-                    return;
-                }
+            if (products.length === 0) {
+                showToast('El archivo está vacío o no contiene datos válidos.');
+                return;
+            }
 
-                // Mapeos de columnas para importar con más coincidencias
-                const firstProduct = products[0];
-                const columnMappings = {
-                    barcode: [
-                        'Código de barras', 'Codigo de Barras', 'codigo de barras',
-                        'barcode', 'Barcode', 'Cód. barras', 'Cód. de barras',
-                        'código de barras', 'CÓDIGO DE BARRAS', 'cód. de barras'
-                    ],
-                    description: [
-                        'Descripción', 'Descripcion', 'descripcion', 'description', 
-                        'Description', 'Nombre del Producto', 'Nombre',
-                        'producto', 'prod', 'Descripción del Producto'
-                    ],
-                    stock: [
-                        'Stock', 'stock', 'Cantidad', 'Cantidad disponible',
-                        'existencias', 'stock actual', 'total'
-                    ],
-                    minStock: [
-                        'Stock Mínimo', 'Stock minimo', 'stock minimo', 
-                        'min stock', 'Mínimo de Stock', 'Stock bajo',
-                        'stock mínimo', 'mínimo', 'stock critico'
-                    ],
-                    purchasePrice: [
-                        'Precio de Compra', 'precio de compra', 'purchase price', 
-                        'Purchase Price', 'Costo', 'Costo de Compra',
-                        'precio', 'precio_compra'
-                    ],
-                    salePrice: [
-                        'Precio de Venta', 'precio de venta', 'sale price', 
-                        'Sale Price', 'Precio', 'Valor de Venta',
-                        'precio_venta', 'costo_venta'
-                    ]
-                };
+            // Imprimir las llaves del primer producto para diagnóstico
+            const firstProduct = products[0];
+            console.log('Encabezados del primer producto:', Object.keys(firstProduct));
 
-                // Normalizar texto para comparación
-                const normalizeText = (text) => {
-                    return text.toLowerCase().trim().replace(/\s+/g, '_');
-                };
+            // Mapeos de columnas con coincidencias flexibles
+            const columnMappings = {
+                barcode: [
+                    'Código de barras', 'Codigo de Barras', 'codigo de barras',
+                    'barcode', 'Barcode', 'Cód. barras', 'Cód. de barras',
+                    'código de barras', 'CÓDIGO DE BARRAS', 'cód. de barras'
+                ],
+                description: [
+                    'Descripción', 'Descripcion', 'descripcion', 'description', 
+                    'Description', 'Nombre del Producto', 'Nombre',
+                    'producto', 'prod', 'Descripción del Producto'
+                ],
+                stock: [
+                    'Stock', 'stock', 'Cantidad', 'Cantidad disponible',
+                    'existencias', 'stock actual', 'total'
+                ],
+                minStock: [
+                    'Stock Mínimo', 'Stock minimo', 'stock minimo', 
+                    'min stock', 'Mínimo de Stock', 'Stock bajo',
+                    'stock mínimo', 'mínimo', 'stock critico'
+                ],
+                purchasePrice: [
+                    'Precio de Compra', 'precio de compra', 'purchase price', 
+                    'Purchase Price', 'Costo', 'Costo de Compra',
+                    'precio', 'precio_compra'
+                ],
+                salePrice: [
+                    'Precio de Venta', 'precio de venta', 'sale price', 
+                    'Sale Price', 'Precio', 'Valor de Venta',
+                    'precio_venta', 'costo_venta'
+                ]
+            };
 
-                const findKey = (possibleKeys) => {
-                    return possibleKeys.find(key => {
-                        const normalizedKey = normalizeText(key);
-                        return firstProduct.hasOwnProperty(normalizedKey);
-                    });
-                };
+            // Normalizar texto para comparación
+            const normalizeText = (text) => {
+                return text.toLowerCase().trim().replace(/[\s_]+/g, ''); // Eliminar espacios y subrayados
+            };
 
-                // Buscar las claves de las columnas en el archivo
-                const barcodeKey = findKey(columnMappings.barcode);
-                const descriptionKey = findKey(columnMappings.description);
-                const stockKey = findKey(columnMappings.stock);
-                const minStockKey = findKey(columnMappings.minStock);
-                const purchasePriceKey = findKey(columnMappings.purchasePrice);
-                const salePriceKey = findKey(columnMappings.salePrice);
-
-                // Validar la presencia de la columna de código de barras
-                if (!barcodeKey) {
-                    console.warn('Falta la columna "Código de Barras". No se podrán identificar los productos.');
-                    showToast('Error: No se encontró la columna "Código de Barras" en el archivo.');
-                    return;
-                }
-
-                console.log('Claves detectadas - Código de Barras:', barcodeKey, 
-                            'Descripción:', descriptionKey, 
-                            'Stock:', stockKey, 
-                            'Stock Mínimo:', minStockKey, 
-                            'Precio de Compra:', purchasePriceKey, 
-                            'Precio de Venta:', salePriceKey);
-
-                let importedCount = 0;
-
-                // Inicializar la base de datos antes de agregar productos
-                const db = new ProductDatabase();
-                await db.init();  // Asegurarse de que la base de datos está lista
-
-                for (let product of products) {
-                    try {
-                        // Crear un nuevo producto con los datos del archivo Excel
-                        const newProduct = {
-                            barcode: barcodeKey ? product[barcodeKey].toString() : '',
-                            description: descriptionKey ? product[descriptionKey] : '',
-                            stock: stockKey ? parseInt(product[stockKey] || '0') : 0,
-                            minStock: minStockKey ? parseInt(product[minStockKey] || '0') : 0,
-                            purchasePrice: purchasePriceKey ? parseFloat(product[purchasePriceKey] || '0') : 0,
-                            salePrice: salePriceKey ? parseFloat(product[salePriceKey] || '0') : 0
-                        };
-
-                        // Verificar todos los datos del producto
-                        console.log('Producto preparado para agregar:', newProduct);
-
-                        // Verificar si el producto tiene un código de barras válido
-                        if (!newProduct.barcode) {
-                            console.warn('Producto omitido debido a falta de código de barras:', product);
-                            continue; // Saltar productos sin código de barras
-                        }
-
-                        // Agregar o actualizar el producto en la base de datos
-                        await db.addProduct(newProduct);
-                        console.log('Producto agregado/actualizado correctamente:', newProduct);
-                        importedCount++;
-                    } catch (error) {
-                        console.error('Error al agregar producto:', newProduct, error);
+            // Función para buscar coincidencias con tolerancia a errores
+            const findKey = (possibleKeys) => {
+                const normalizedFirstProductKeys = Object.keys(firstProduct).map(normalizeText);
+                console.log('Encabezados normalizados del archivo:', normalizedFirstProductKeys);
+                for (let key of possibleKeys) {
+                    const normalizedKey = normalizeText(key);
+                    const matchedKey = normalizedFirstProductKeys.find(
+                        (productKey) => productKey.includes(normalizedKey) || normalizedKey.includes(productKey)
+                    );
+                    if (matchedKey) {
+                        // Retorna la clave original del primer producto que coincide
+                        return Object.keys(firstProduct).find((originalKey) => normalizeText(originalKey) === matchedKey);
                     }
                 }
+                return null;
+            };
 
-                if (importedCount > 0) {
-                    showToast(`${importedCount} productos importados correctamente.`);
-                } else {
-                    showToast('No se importaron productos. Revisa el archivo y los datos.');
-                }
-            } catch (error) {
-                console.error('Error durante la importación:', error);
-                showToast('Error durante la importación. Revisa la consola para más detalles.');
+            // Buscar las claves de las columnas en el archivo
+            const barcodeKey = findKey(columnMappings.barcode);
+            const descriptionKey = findKey(columnMappings.description);
+            const stockKey = findKey(columnMappings.stock);
+            const minStockKey = findKey(columnMappings.minStock);
+            const purchasePriceKey = findKey(columnMappings.purchasePrice);
+            const salePriceKey = findKey(columnMappings.salePrice);
+
+            // Validar la presencia de la columna de código de barras
+            if (!barcodeKey) {
+                console.warn('Falta la columna "Código de Barras". No se podrán identificar los productos.');
+                showToast('Error: No se encontró la columna "Código de Barras" en el archivo.');
+                return;
             }
-        };
 
-        reader.onerror = (error) => {
-            console.error('Error al leer el archivo:', error);
-            showToast('Error al leer el archivo. Por favor, intenta de nuevo.');
-        };
+            console.log('Claves detectadas - Código de Barras:', barcodeKey, 
+                        'Descripción:', descriptionKey, 
+                        'Stock:', stockKey, 
+                        'Stock Mínimo:', minStockKey, 
+                        'Precio de Compra:', purchasePriceKey, 
+                        'Precio de Venta:', salePriceKey);
 
-        reader.readAsArrayBuffer(file);
-    });
+            let importedCount = 0;
+
+            // Inicializar la base de datos antes de agregar productos
+            const db = new ProductDatabase();
+            await db.init();  // Asegurarse de que la base de datos está lista
+
+            for (let product of products) {
+                try {
+                    // Crear un nuevo producto con los datos del archivo Excel
+                    const newProduct = {
+                        barcode: barcodeKey ? product[barcodeKey].toString() : '',
+                        description: descriptionKey ? product[descriptionKey] : '',
+                        stock: stockKey ? parseInt(product[stockKey] || '0') : 0,
+                        minStock: minStockKey ? parseInt(product[minStockKey] || '0') : 0,
+                        purchasePrice: purchasePriceKey ? parseFloat(product[purchasePriceKey] || '0') : 0,
+                        salePrice: salePriceKey ? parseFloat(product[salePriceKey] || '0') : 0
+                    };
+
+                    // Verificar todos los datos del producto
+                    console.log('Producto preparado para agregar:', newProduct);
+
+                    // Verificar si el producto tiene un código de barras válido
+                    if (!newProduct.barcode) {
+                        console.warn('Producto omitido debido a falta de código de barras:', product);
+                        continue; // Saltar productos sin código de barras
+                    }
+
+                    // Agregar o actualizar el producto en la base de datos
+                    await db.addProduct(newProduct);
+                    console.log('Producto agregado/actualizado correctamente:', newProduct);
+                    importedCount++;
+                } catch (error) {
+                    console.error('Error al agregar producto:', newProduct, error);
+                }
+            }
+
+            if (importedCount > 0) {
+                showToast(`${importedCount} productos importados correctamente.`);
+            } else {
+                showToast('No se importaron productos. Revisa el archivo y los datos.');
+            }
+        } catch (error) {
+            console.error('Error durante la importación:', error);
+            showToast('Error durante la importación. Revisa la consola para más detalles.');
+        }
+    };
+
+    reader.onerror = (error) => {
+        console.error('Error al leer el archivo:', error);
+        showToast('Error al leer el archivo. Por favor, intenta de nuevo.');
+    };
+
+    reader.readAsArrayBuffer(file);
 });
