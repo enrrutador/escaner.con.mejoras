@@ -467,4 +467,4 @@ document.addEventListener('DOMContentLoaded', async () => {
         XLSX.utils.book_append_sheet(workbook, worksheet, 'Productos');
         XLSX.writeFile(workbook, 'productos.xlsx');
     }
-});
+);
