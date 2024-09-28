@@ -385,49 +385,55 @@ document.addEventListener('DOMContentLoaded', async () => {
         productImage.src = '';
         productImage.style.display = 'none';
     }
-});
-
+    
     // Mostrar productos con stock bajo
-    lowStockButton.addEventListener('click', async () => {
-        const lowStockProducts = await db.getAllProducts();
-        const filteredProducts = lowStockProducts.filter(product => product.stock <= product.minStock);
-
-        if (filteredProducts.length === 0) {
-            showToast('No hay productos con stock bajo.');
-            return;
-        }
-
-        // Muestra una lista de productos con stock bajo
-        // Implementa el comportamiento para mostrar estos productos en la interfaz
-    });
+    if (lowStockButton) {
+        lowStockButton.addEventListener('click', async () => {
+            const lowStockProducts = await db.getAllProducts();
+            const filteredProducts = lowStockProducts.filter(product => product.stock <= product.minStock);
+    
+            if (filteredProducts.length === 0) {
+                showToast('No hay productos con stock bajo.');
+                return;
+            }
+    
+            // Muestra una lista de productos con stock bajo
+            // Implementa el comportamiento para mostrar estos productos en la interfaz
+        });
+    }
 
     // Importar productos desde Excel
-    fileInput.addEventListener('change', async (event) => {
-        const file = event.target.files[0];
-        if (!file) return;
-
-        try {
-            const products = await importProductsFromExcel(file);
-            for (const product of products) {
-                await db.addProduct(product);
+    if (fileInput) {
+        fileInput.addEventListener('change', async (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+    
+            try {
+                const products = await importProductsFromExcel(file);
+                for (const product of products) {
+                    await db.addProduct(product);
+                }
+                showToast('Productos importados con éxito.');
+            } catch (error) {
+                console.error('Error al importar productos:', error);
+                showToast('Error al importar productos.');
             }
-            showToast('Productos importados con éxito.');
-        } catch (error) {
-            console.error('Error al importar productos:', error);
-            showToast('Error al importar productos.');
-        }
-    });
+        });
+    }
 
     // Exportar productos a Excel
-    document.getElementById('export-button').addEventListener('click', async () => {
-        try {
-            const allProducts = await db.getAllProducts();
-            exportProductsToExcel(allProducts);
-        } catch (error) {
-            console.error('Error al exportar productos:', error);
-            showToast('Error al exportar productos.');
-        }
-    });
+    const exportButton = document.getElementById('export-button');
+    if (exportButton) {
+        exportButton.addEventListener('click', async () => {
+            try {
+                const allProducts = await db.getAllProducts();
+                exportProductsToExcel(allProducts);
+            } catch (error) {
+                console.error('Error al exportar productos:', error);
+                showToast('Error al exportar productos.');
+            }
+        });
+    }
 
     // Función para importar productos desde Excel
     async function importProductsFromExcel(file) {
@@ -467,4 +473,4 @@ document.addEventListener('DOMContentLoaded', async () => {
         XLSX.utils.book_append_sheet(workbook, worksheet, 'Productos');
         XLSX.writeFile(workbook, 'productos.xlsx');
     }
-);
+});
