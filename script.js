@@ -443,13 +443,14 @@ document.getElementById('import-button').addEventListener('click', function() {
                 const existingProductIndex = products.findIndex(p => p.barcode === row['Codigo de Barras']);
                 
                 const newProduct = {
-                    barcode: row['Código de Barras'],['Codigo de Barras'],['codigo de barras']
-                    name: row['Nombre del Producto'],['Descripcion del Producto'],['Descripción del Producto']
-                    purchasePrice: parseFloat(row['Precio de Compra']) || null,
-                    salePrice: parseFloat(row['Precio de Venta']) || null,
-                    stock: parseInt(row['Stock']),
-                    minimumStock: parseInt(row['Stock Mínimo'])
-                };
+               barcode: row['Código de Barras'] || row['Codigo de Barras'] || row['codigo de barras'],
+               name: row['Nombre del Producto'] || row['Descripcion del Producto'] || row['Descripción del Producto'],
+               purchasePrice: parseFloat(row['Precio de Compra']) || null,
+               salePrice: parseFloat(row['Precio de Venta']) || null,
+               stock: parseInt(row['Stock']),
+               minimumStock: parseInt(row['Stock Mínimo'])
+               };
+
 
                 if (existingProductIndex !== -1) {
                     // Actualizar producto existente
@@ -462,7 +463,7 @@ document.getElementById('import-button').addEventListener('click', function() {
 
             // Guardar los productos actualizados en localStorage
             localStorage.setItem('products', JSON.stringify(products));
-            alert('Productos importados correctamente.');
+              alert('Productos importados correctamente.');
         };
 
         reader.readAsArrayBuffer(file);
