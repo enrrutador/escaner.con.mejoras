@@ -370,7 +370,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     document.getElementById('scan-button').addEventListener('click', async () => {
         if (!('BarcodeDetector' in window)) {
-            showToast('API de detección de códigos de barras no soportada en este navegador.');
+            showToast('No soportada en este navegador.');
             return;
         }
 
@@ -384,11 +384,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             'code_128',
             'code_39',
             'itf',           // ITF (Interleaved 2 of 5)
-            'data_matrix',    // Data Matrix
-            'aztec',          // Aztec Code
-            'pdf417',         // PDF417
-            'codabar',        // Codabar (si está disponible en la librería externa)
-            'databar'         // GS1 DataBar (si está disponible)
+
         ]
     });
 }
