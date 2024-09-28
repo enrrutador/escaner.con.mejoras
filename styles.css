@@ -295,3 +295,16 @@ input {
     opacity: 1;
     visibility: visible;
 
+#scanner-container {
+    position: absolute; /* Permite mover el contenedor libremente */
+    top: 50px; /* Posición inicial */
+    left: 50px;
+    width: 300px;
+    height: 200px;
+    resize: both; /* Habilita el redimensionamiento */
+    overflow: auto; /* Asegura que el contenido sea visible al redimensionar */
+    border: 2px solid #000; /* Bordes visibles para identificar el área */
+    background-color: #fff; /* Fondo blanco */
+    z-index: 1000; /* Asegura que esté al frente */
+    cursor: grab; /* Cambia el cursor a una mano para arrastrar */
+}
