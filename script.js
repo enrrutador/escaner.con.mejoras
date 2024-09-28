@@ -216,7 +216,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const salePriceInput = document.getElementById('sale-price');
     const productImage = document.getElementById('product-image');
     const scannerContainer = document.getElementById('scanner-container');
-    const video = document.getElementById('video');
+    
     const lowStockButton = document.getElementById('low-stock-button');
     const fileInput = document.getElementById('fileInput');
     let barcodeDetector;
