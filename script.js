@@ -443,7 +443,7 @@ document.getElementById('import-button').addEventListener('click', function() {
                 const existingProductIndex = products.findIndex(p => p.barcode === row['Codigo de Barras']);
                 
                 const newProduct = {
-                    barcode: row['Código de Barras'],['Codigo de Barras'],['codigo de barras'],
+                    barcode: row['Código de Barras'],['Codigo de Barras'],['codigo de barras']
                     name: row['Nombre del Producto'],['Descripcion del Producto'],['Descripción del Producto']
                     purchasePrice: parseFloat(row['Precio de Compra']) || null,
                     salePrice: parseFloat(row['Precio de Venta']) || null,
