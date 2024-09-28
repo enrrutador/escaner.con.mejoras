@@ -254,7 +254,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
-    const video = document.getElementById('video');
+const video = document.getElementById('video');
 const scannerContainer = document.getElementById('scanner-container');
 const barcodeInput = document.getElementById('barcodeInput');
 const descriptionInput = document.getElementById('descriptionInput');
