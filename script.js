@@ -212,11 +212,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     const descriptionInput = document.getElementById('description');
     const stockInput = document.getElementById('stock');
     const minStockInput = document.getElementById('min-stock');
-   
+    const purchasePriceInput = document.getElementById('purchasePriceInput');
+    const salePriceInput = document.getElementById('salePriceInput');
+    const productImage = document.getElementById('productImage');
     const scannerContainer = document.getElementById('scanner-container');
-    
     const lowStockButton = document.getElementById('low-stock-button');
     const fileInput = document.getElementById('fileInput');
+    const video = document.getElementById('video');
     let barcodeDetector;
     let productNotFoundAlertShown = false;
 
@@ -252,58 +254,68 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
-const video = document.getElementById('video');
-
-
-const purchasePriceInput = document.getElementById('purchasePriceInput');
-const salePriceInput = document.getElementById('salePriceInput');
-const productImage = document.getElementById('productImage');
-
-let productNotFoundAlertShown = false;
-
-// Función para iniciar el escáner de códigos de barras
-function startScanner() {
-    scannerContainer.style.display = 'flex';
-    Quagga.start();
-}
-
-// Detener el escáner
-function stopScanner() {
-    Quagga.stop();
-    scannerContainer.style.display = 'none';
-}
-
-// Función para buscar productos
-async function searchProduct(query) {
-    console.log('Iniciando búsqueda del producto:', query);
-
-    const isBarcode = /^[\w-]+$/.test(query);
-    let product;
-
-    if (isBarcode) {
-        console.log('Buscando por código de barras en IndexedDB...');
-        product = await db.getProduct(query);
-        console.log('Resultado de la búsqueda local:', product);
+    // Función para iniciar el escáner de códigos de barras
+    function startScanner() {
+        scannerContainer.style.display = 'flex';
+        Quagga.start(); // Iniciar Quagga para el escaneo
     }
 
-    if (!product) {
-        console.log('Buscando en OpenFoodFacts...');
-        product = await searchInOpenFoodFacts(query);
-        console.log('Resultado de OpenFoodFacts:', product);
+    // Detener el escáner
+    function stopScanner() {
+        Quagga.stop(); // Detener Quagga
+        scannerContainer.style.display = 'none';
     }
 
-    if (product) {
-        cache.set(query, product);
-        fillForm(product);
-        console.log('Producto encontrado y formulario llenado.');
-        productNotFoundAlertShown = false;
-    } else {
-        if (!productNotFoundAlertShown) {
-            showToast('Producto no encontrado.');
-            productNotFoundAlertShown = true;
+    // Función para buscar productos
+    async function searchProduct(query) {
+        console.log('Iniciando búsqueda del producto:', query);
+
+        const isBarcode = /^[\w-]+$/.test(query); // Validar si el query es un código de barras
+        let product;
+
+        if (isBarcode) {
+            console.log('Buscando por código de barras en IndexedDB...');
+            product = await db.getProduct(query);
+            console.log('Resultado de la búsqueda local:', product);
+        }
+
+        if (!product) {
+            console.log('Buscando en OpenFoodFacts...');
+            product = await searchInOpenFoodFacts(query);
+            console.log('Resultado de OpenFoodFacts:', product);
+        }
+
+        if (product) {
+            cache.set(query, product); // Cachear el producto
+            fillForm(product); // Llenar el formulario con los datos del producto
+            console.log('Producto encontrado y formulario llenado.');
+            productNotFoundAlertShown = false;
+        } else {
+            if (!productNotFoundAlertShown) {
+                showToast('Producto no encontrado.');
+                productNotFoundAlertShown = true;
+            }
         }
     }
-}
+
+    // Función para rellenar el formulario con los datos del producto
+    function fillForm(product) {
+        barcodeInput.value = product.barcode || '';
+        descriptionInput.value = product.description || '';
+        stockInput.value = product.stock || '';
+        minStockInput.value = product.minStock || '';
+        purchasePriceInput.value = product.purchasePrice || '';
+        salePriceInput.value = product.salePrice || '';
+
+        // Verifica si el elemento de imagen existe y si hay una imagen disponible
+        if (productImage && product.image) {
+            productImage.src = product.image;
+            productImage.style.display = 'block';
+        } else if (productImage) {
+            productImage.style.display = 'none';
+        }
+    }
+});
 
 // Función para buscar en OpenFoodFacts
 async function searchInOpenFoodFacts(query) {
