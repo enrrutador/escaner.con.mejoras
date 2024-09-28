@@ -263,31 +263,28 @@ document.addEventListener('DOMContentLoaded', async () => {
         productImage.style.display = product.imageUrl ? 'block' : 'none';
     }
 
-    // Inicializar y configurar QuaggaJS
-   function initQuagga() {
-    Quagga.init({
-        inputStream: {
-            name: 'Live',
-            type: 'LiveStream',
-            target: video, // Elemento del video en tu HTML
-            constraints: {
-                facingMode: 'environment' // Usar la cámara trasera
+    // Inicializar y configurar QuaggaJS con permisos para usar la cámara
+    function initQuagga() {
+        Quagga.init({
+            inputStream: {
+                name: 'Live',
+                type: 'LiveStream',
+                target: video,
+                constraints: {
+                    facingMode: 'environment' // Utilizar la cámara trasera
+                }
+            },
+            decoder: {
+                readers: ['ean_reader'] // Agrega más tipos de lectores según sea necesario
             }
-        },
-        decoder: {
-            readers: ['ean_reader'] // Tipo de código a leer
-        }
-    }, (err) => {
-        if (err) {
-            console.error('Error al iniciar Quagga:', err);
-            showToast('No se pudo acceder a la cámara. Revisa los permisos.');
-            return;
-        }
-        Quagga.start();
-        console.log("Escáner iniciado correctamente");
-    });
-}
-
+        }, (err) => {
+            if (err) {
+                console.error('Error al iniciar Quagga:', err);
+                showToast('Error al iniciar el escáner de códigos de barras.');
+                return;
+            }
+            Quagga.start();
+        });
 
         // Manejador de detección
         Quagga.onDetected((result) => {
@@ -312,72 +309,72 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
             }
         });
-    
+    }
 
-// Iniciar el escáner
-const scanButton = document.getElementById('scan-button');  // Cambiado a 'scan-button'
-if (scanButton) {
+    // Iniciar el escáner con permisos de cámara
+    const scanButton = document.getElementById('scan-button');
     scanButton.addEventListener('click', () => {
         scannerContainer.style.display = 'block';
-        initQuagga();
+        // Verificar si getUserMedia está disponible y solicitar acceso a la cámara
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            console.log('getUserMedia soportado');
+            navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+            .then((stream) => {
+                video.srcObject = stream;
+                video.play();
+                console.log('Acceso a la cámara concedido');
+                initQuagga(); // Iniciar Quagga para el escaneo
+            })
+            .catch((err) => {
+                console.error('Error al acceder a la cámara:', err);
+                showToast('No se puede acceder a la cámara. Revisa los permisos.');
+            });
+        } else {
+            console.error('getUserMedia no es soportado en este navegador');
+            showToast('Este navegador no soporta el uso de la cámara.');
+        }
     });
-} else {
-    console.error('Elemento scan-button no encontrado en el DOM.');
-}
-
 
     // Detener el escáner
     const stopScannerButton = document.getElementById('stop-scanner');
-    if (stopScannerButton) {
-        stopScannerButton.addEventListener('click', () => {
-            scannerContainer.style.display = 'none';
-            Quagga.stop();
-        });
-    } else {
-        console.error('Elemento stop-scanner no encontrado en el DOM.');
-    }
+    stopScannerButton.addEventListener('click', () => {
+        scannerContainer.style.display = 'none';
+        Quagga.stop();
+    });
 
     // Guardar producto
     const saveButton = document.getElementById('save-button');
-    if (saveButton) {
-        saveButton.addEventListener('click', async () => {
-            const product = {
-                barcode: barcodeInput.value.trim(),
-                description: descriptionInput.value.trim(),
-                stock: parseFloat(stockInput.value.trim()),
-                minStock: parseFloat(minStockInput.value.trim()),
-                purchasePrice: parseFloat(purchasePriceInput.value.trim()),
-                salePrice: parseFloat(salePriceInput.value.trim()),
-                imageUrl: productImage.src
-            };
+    saveButton.addEventListener('click', async () => {
+        const product = {
+            barcode: barcodeInput.value.trim(),
+            description: descriptionInput.value.trim(),
+            stock: parseFloat(stockInput.value.trim()),
+            minStock: parseFloat(minStockInput.value.trim()),
+            purchasePrice: parseFloat(purchasePriceInput.value.trim()),
+            salePrice: parseFloat(salePriceInput.value.trim()),
+            imageUrl: productImage.src
+        };
 
-            if (product.barcode === '') {
-                showToast('El código de barras es obligatorio.');
-                return;
-            }
+        if (product.barcode === '') {
+            showToast('El código de barras es obligatorio.');
+            return;
+        }
 
-            try {
-                await db.addProduct(product);
-                showToast('Producto guardado.');
-                clearFields();
-            } catch (error) {
-                console.error('Error al guardar el producto:', error);
-                showToast('Error al guardar el producto.');
-            }
-        });
-    } else {
-        console.error('Elemento save-button no encontrado en el DOM.');
-    }
+        try {
+            await db.addProduct(product);
+            showToast('Producto guardado.');
+            clearFields();
+        } catch (error) {
+            console.error('Error al guardar el producto:', error);
+            showToast('Error al guardar el producto.');
+        }
+    });
 
     // Borrar campos
     const clearButton = document.getElementById('clear-button');
-    if (clearButton) {
-        clearButton.addEventListener('click', () => {
-            clearFields();
-        });
-    } else {
-        console.error('Elemento clear-button no encontrado en el DOM.');
-    }
+    clearButton.addEventListener('click', () => {
+        clearFields();
+    });
 
     function clearFields() {
         barcodeInput.value = '';
@@ -389,18 +386,18 @@ if (scanButton) {
         productImage.src = '';
         productImage.style.display = 'none';
     }
-    
+
     // Mostrar productos con stock bajo
     if (lowStockButton) {
         lowStockButton.addEventListener('click', async () => {
             const lowStockProducts = await db.getAllProducts();
             const filteredProducts = lowStockProducts.filter(product => product.stock <= product.minStock);
-    
+
             if (filteredProducts.length === 0) {
                 showToast('No hay productos con stock bajo.');
                 return;
             }
-    
+
             // Muestra una lista de productos con stock bajo
             // Implementa el comportamiento para mostrar estos productos en la interfaz
         });
@@ -411,7 +408,7 @@ if (scanButton) {
         fileInput.addEventListener('change', async (event) => {
             const file = event.target.files[0];
             if (!file) return;
-    
+
             try {
                 const products = await importProductsFromExcel(file);
                 for (const product of products) {
@@ -427,17 +424,15 @@ if (scanButton) {
 
     // Exportar productos a Excel
     const exportButton = document.getElementById('export-button');
-    if (exportButton) {
-        exportButton.addEventListener('click', async () => {
-            try {
-                const allProducts = await db.getAllProducts();
-                exportProductsToExcel(allProducts);
-            } catch (error) {
-                console.error('Error al exportar productos:', error);
-                showToast('Error al exportar productos.');
-            }
-        });
-    }
+    exportButton.addEventListener('click', async () => {
+        try {
+            const allProducts = await db.getAllProducts();
+            exportProductsToExcel(allProducts);
+        } catch (error) {
+            console.error('Error al exportar productos:', error);
+            showToast('Error al exportar productos.');
+        }
+    });
 
     // Función para importar productos desde Excel
     async function importProductsFromExcel(file) {
@@ -478,6 +473,7 @@ if (scanButton) {
         XLSX.writeFile(workbook, 'productos.xlsx');
     }
 });
+
 // Función para hacer que el contenedor del escáner sea movible
 function makeElementDraggable(element) {
     let isDragging = false;
