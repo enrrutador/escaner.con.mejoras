@@ -312,7 +312,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
             }
         });
-    }
+    
 
 // Iniciar el escáner
 const scanButton = document.getElementById('scan-button');  // Cambiado a 'scan-button'
