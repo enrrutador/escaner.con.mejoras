@@ -264,52 +264,73 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // Inicializar y configurar QuaggaJS con permisos para usar la cámara
-    function initQuagga() {
-        Quagga.init({
-            inputStream: {
-                name: 'Live',
-                type: 'LiveStream',
-                target: video,
-                constraints: {
-                    facingMode: 'environment' // Utilizar la cámara trasera
-                }
+  
+function initQuagga() {
+    Quagga.init({
+        inputStream: {
+            name: "Live",
+            type: "LiveStream",
+            target: video, // Elemento de video
+            constraints: {
+                facingMode: "environment", // Cámara trasera
+                width: 640, // Aumentar la resolución
+                height: 480 // Aumentar la resolución
             },
-            decoder: {
-                readers: ['ean_reader'] // Agrega más tipos de lectores según sea necesario
+            area: { // Proporción del área a escanear
+                top: "0%",    
+                right: "0%",  
+                left: "0%",   
+                bottom: "0%"  
             }
-        }, (err) => {
-            if (err) {
-                console.error('Error al iniciar Quagga:', err);
-                showToast('Error al iniciar el escáner de códigos de barras.');
-                return;
-            }
-            Quagga.start();
-        });
+        },
+        decoder: {
+            readers: [
+                "ean_reader", // Solo el lector EAN
+            ]
+        },
+        locator: {
+            patchSize: "medium",
+            halfSample: true
+        }
+    }, (err) => {
+        if (err) {
+            console.error("Error al iniciar Quagga:", err);
+            showToast("Error al iniciar el escáner de códigos de barras.");
+            return;
+        }
+        console.log("Quagga iniciado correctamente");
+        Quagga.start();
+    });
 
-        // Manejador de detección
-        Quagga.onDetected((result) => {
-            if (result && result.codeResult && result.codeResult.code) {
-                const barcode = result.codeResult.code;
-                barcodeInput.value = barcode;
+    // Manejador de detección
+    Quagga.onDetected((result) => {
+        if (result && result.codeResult && result.codeResult.code) {
+            const barcode = result.codeResult.code;
+            barcodeInput.value = barcode;
 
-                // Detener el escáner para evitar múltiples lecturas
-                Quagga.stop();
+            // Evitar múltiples lecturas
+            Quagga.stop(); // Detener la detección temporalmente
 
-                // Buscar producto en la base de datos local
-                db.getProduct(barcode).then((product) => {
-                    if (product) {
-                        populateProductFields(product);
-                    } else {
-                        showToast('Producto no encontrado.');
-                        productNotFoundAlertShown = true;
-                    }
-                }).catch((error) => {
-                    console.error('Error al buscar producto:', error);
-                    showToast('Error al buscar producto en la base de datos.');
-                });
-            }
-        });
-    }
+            // Esperar un momento antes de reiniciar Quagga
+            setTimeout(() => {
+                Quagga.start(); // Reiniciar la detección
+            }, 1000); // Ajusta el tiempo según tus necesidades
+
+            // Buscar producto en la base de datos local
+            db.getProduct(barcode).then((product) => {
+                if (product) {
+                    populateProductFields(product);
+                } else {
+                    showToast('Producto no encontrado.');
+                    productNotFoundAlertShown = true;
+                }
+            }).catch((error) => {
+                console.error('Error al buscar producto:', error);
+                showToast('Error al buscar producto en la base de datos.');
+            });
+        }
+    });
+}
 
     // Iniciar el escáner con permisos de cámara
     const scanButton = document.getElementById('scan-button');
