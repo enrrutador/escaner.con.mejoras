@@ -374,20 +374,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
 
-     if (!barcodeDetector) {
-    barcodeDetector = new BarcodeDetector({
-        formats: [
-            'ean_13',
-            'ean_8',
-            'upc_a',
-            'upc_e',
-            'code_128',
-            'code_39',
-            'itf',           // ITF (Interleaved 2 of 5)
-
-        ]
-    });
-}
+ if (!barcodeDetector) {
+            barcodeDetector = new BarcodeDetector({ formats: ['ean_13'],['ean_8'] });
+        }
 
 
         startScanner();
