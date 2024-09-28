@@ -475,3 +475,37 @@ if (scanButton) {
         XLSX.writeFile(workbook, 'productos.xlsx');
     }
 });
+// Función para hacer que el contenedor del escáner sea movible
+function makeElementDraggable(element) {
+    let isDragging = false;
+    let startX, startY, offsetX, offsetY;
+
+    element.addEventListener('mousedown', (e) => {
+        isDragging = true;
+        startX = e.clientX;
+        startY = e.clientY;
+        const rect = element.getBoundingClientRect();
+        offsetX = startX - rect.left;
+        offsetY = startY - rect.top;
+
+        element.style.cursor = 'grabbing'; // Cambiar cursor mientras se arrastra
+    });
+
+    document.addEventListener('mousemove', (e) => {
+        if (isDragging) {
+            element.style.left = `${e.clientX - offsetX}px`;
+            element.style.top = `${e.clientY - offsetY}px`;
+        }
+    });
+
+    document.addEventListener('mouseup', () => {
+        isDragging = false;
+        element.style.cursor = 'grab'; // Volver al cursor de agarre cuando se suelte
+    });
+}
+
+// Hacer que el contenedor del video sea arrastrable
+document.addEventListener('DOMContentLoaded', () => {
+    const scannerContainer = document.getElementById('scanner-container');
+    makeElementDraggable(scannerContainer);
+});
