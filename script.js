@@ -504,21 +504,18 @@ document.getElementById('import-button').addEventListener('click', function() {
 });
 
 
-    document.getElementById('export-button').addEventListener('click', async () => {
-        const allProducts = await db.getAllProducts();
-        const worksheet = XLSX.utils.json_to_sheet(allProducts.map(product => ({
-            'Código de Barras': product.barcode,
-            'Descripción': product.description,
-            'Stock': product.stock,
-            'Stock Mínimo': product.minStock,
-            'Precio de Compra': product.purchasePrice,
-            'Precio de Venta': product.salePrice
-        })));
-        
-        const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, "Productos");
-        
-        XLSX.writeFile(workbook, "productos_exportados.xlsx");
-        showToast('Exportación completada.');
-    });
+document.getElementById('export-button').addEventListener('click', async () => {
+    const allProducts = await db.getAllProducts();
+    const worksheet = XLSX.utils.json_to_sheet(allProducts.map(product => ({
+        'Código de Barras': product.barcode,
+        'Descripción': product.description,
+        'Stock': product.stock,
+        'Stock Mínimo': product.minStock,
+        'Precio de Compra': product.purchasePrice,
+        'Precio de Venta': product.salePrice
+    })));
+
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Productos');
+    XLSX.writeFile(workbook, 'productos_exportados.xlsx');
 });
