@@ -296,15 +296,18 @@ input {
     visibility: visible;
 
 #scanner-container {
-    position: absolute; /* Permite mover el contenedor libremente */
-    top: 50px; /* Posición inicial */
-    left: 50px;
-    width: 300px;
-    height: 200px;
-    resize: both; /* Habilita el redimensionamiento */
-    overflow: auto; /* Asegura que el contenido sea visible al redimensionar */
-    border: 2px solid #000; /* Bordes visibles para identificar el área */
+    position: fixed; /* Posición fija para centrar en el viewport */
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%); /* Centramos horizontal y verticalmente */
+    width: 360px; /* Tamaño inicial del video (puedes ajustarlo según el diseño actual) */
+    height: 240px; /* Tamaño inicial */
+    width: calc(360px * 1.2); /* Aumenta el tamaño un 20% */
+    height: calc(240px * 1.2); /* Aumenta el tamaño un 20% */
+    resize: none; /* Desactivamos el redimensionamiento manual */
+    overflow: hidden; /* Ocultamos cualquier desbordamiento */
+    border: 2px solid #000; /* Opcional: borde para el contenedor */
     background-color: #fff; /* Fondo blanco */
-    z-index: 1000; /* Asegura que esté al frente */
-    cursor: grab; /* Cambia el cursor a una mano para arrastrar */
+    z-index: 1000; /* Asegura que esté en el frente de otros elementos */
 }
+
