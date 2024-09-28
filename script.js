@@ -219,7 +219,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     const video = document.getElementById('video');
     const lowStockButton = document.getElementById('low-stock-button');
     const fileInput = document.getElementById('fileInput');
-    let barcodeDetector;
     let productNotFoundAlertShown = false;
 
     const cache = new Map();
@@ -263,103 +262,46 @@ document.addEventListener('DOMContentLoaded', async () => {
         productImage.style.display = product.imageUrl ? 'block' : 'none';
     }
 
-    // Inicializar y configurar QuaggaJS con permisos para usar la cámara
-  
-function initQuagga() {
-    Quagga.init({
-        inputStream: {
-            name: "Live",
-            type: "LiveStream",
-            target: video, // Elemento de video
-            constraints: {
-                facingMode: "environment" // Cámara trasera
-            },
-            area: { // Limitar el área de escaneo (ajusta según tu necesidad)
-                top: "0%", 
-                right: "0%", 
-                left: "0%", 
-                bottom: "0%"
-            }
-        },
-        decoder: {
-            readers: [
-                "ean_reader" // Mantén solo el lector necesario
-            ]
-        },
-        locator: {
-            patchSize: "small", // Cambia a "small" para mejorar la velocidad
-            halfSample: true     // Mantener medio muestreo
-        }
-    }, (err) => {
-        if (err) {
-            console.error("Error al iniciar Quagga:", err);
-            showToast("Error al iniciar el escáner de códigos de barras.");
-            return;
-        }
-        console.log("Quagga iniciado correctamente");
-        Quagga.start();
-    });
+    // Inicializar ZXing
+    const codeReader = new ZXing.BrowserMultiFormatReader();
 
-    // Manejador de detección
-    Quagga.onDetected((result) => {
-        if (result && result.codeResult && result.codeResult.code) {
-            const barcode = result.codeResult.code;
-            barcodeInput.value = barcode;
-
-            // Solo procesa una detección y detiene temporalmente
-            Quagga.stop(); 
-
-            // Proceso de búsqueda en la base de datos
-            db.getProduct(barcode).then((product) => {
-                if (product) {
-                    populateProductFields(product);
-                } else {
-                    showToast('Producto no encontrado.');
-                    productNotFoundAlertShown = true;
-                }
-            }).catch((error) => {
-                console.error('Error al buscar producto:', error);
-                showToast('Error al buscar producto en la base de datos.');
-            });
-
-            // Reinicia Quagga después de un breve retraso
-            setTimeout(() => {
-                Quagga.start(); // Reiniciar la detección después de un tiempo
-            }, 1500); // Aumentar el tiempo para evitar detecciones rápidas
-        }
-    });
-}
-
-
-    // Iniciar el escáner con permisos de cámara
+    // Iniciar escáner al hacer clic en el botón
     const scanButton = document.getElementById('scan-button');
     scanButton.addEventListener('click', () => {
         scannerContainer.style.display = 'block';
-        // Verificar si getUserMedia está disponible y solicitar acceso a la cámara
-        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-            console.log('getUserMedia soportado');
-            navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
-            .then((stream) => {
-                video.srcObject = stream;
-                video.play();
-                console.log('Acceso a la cámara concedido');
-                initQuagga(); // Iniciar Quagga para el escaneo
-            })
-            .catch((err) => {
-                console.error('Error al acceder a la cámara:', err);
-                showToast('No se puede acceder a la cámara. Revisa los permisos.');
-            });
-        } else {
-            console.error('getUserMedia no es soportado en este navegador');
-            showToast('Este navegador no soporta el uso de la cámara.');
-        }
+        console.log("Mostrando el contenedor de la cámara");
+
+        // Comenzar a escanear con ZXing
+        codeReader.decodeFromVideoDevice(null, 'video', (result, err) => {
+            if (result) {
+                console.log(result);
+                barcodeInput.value = result.text; // Actualiza el campo con el resultado
+                // Detener el escáner
+                codeReader.reset();
+                // Buscar producto en la base de datos
+                db.getProduct(result.text).then((product) => {
+                    if (product) {
+                        populateProductFields(product);
+                    } else {
+                        showToast('Producto no encontrado.');
+                        productNotFoundAlertShown = true;
+                    }
+                }).catch((error) => {
+                    console.error('Error al buscar producto:', error);
+                    showToast('Error al buscar producto en la base de datos.');
+                });
+            }
+            if (err && !(err instanceof ZXing.NotFoundException)) {
+                console.error(err);
+            }
+        });
     });
 
     // Detener el escáner
     const stopScannerButton = document.getElementById('stop-scanner');
     stopScannerButton.addEventListener('click', () => {
         scannerContainer.style.display = 'none';
-        Quagga.stop();
+        codeReader.reset(); // Detener el escáner de ZXing
     });
 
     // Guardar producto
