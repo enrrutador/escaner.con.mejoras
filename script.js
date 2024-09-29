@@ -64,12 +64,9 @@ loginForm.addEventListener('submit', async (e) => {
         if (userDoc && userDoc.deviceId) {
             // Si ya existe un dispositivo vinculado
             if (userDoc.deviceId !== deviceId) {
-                // Si el dispositivo actual no coincide con el vinculado, denegar acceso
                 showToast('Acceso denegado. Esta cuenta está vinculada a otro dispositivo.');
-                
-                // Cerrar la sesión en este dispositivo
                 await auth.signOut();
-                return;  // Detener el flujo
+                return;
             }
         } else {
             // Si es la primera vez que se inicia sesión, vincular el dispositivo
@@ -92,15 +89,13 @@ onAuthStateChanged(auth, async (user) => {
         const userDoc = await getUserDevice(user.uid);
         
         if (userDoc && userDoc.deviceId !== deviceId) {
-            // Si el dispositivo no coincide, cerrar sesión inmediatamente
             showToast('Acceso denegado. Esta cuenta está vinculada a otro dispositivo.');
             await auth.signOut();
             loginContainer.style.display = 'block';
             appContainer.style.display = 'none';
-            return;  // Detener cualquier acceso
+            return;
         }
 
-        // Si el dispositivo está autorizado, permitir el acceso
         loginContainer.style.display = 'none';
         appContainer.style.display = 'block';
     } else {
@@ -263,29 +258,41 @@ document.addEventListener('DOMContentLoaded', async () => {
         productImage.style.display = product.imageUrl ? 'block' : 'none';
     }
 
-   
-// Modificar el evento del botón de escaneo
-const scanButton = document.getElementById('scan-button');
-scanButton.addEventListener('click', () => {
-    const scannerContainer = document.getElementById('scanner-container');
-    scannerContainer.style.display = 'block';
-    console.log("Mostrando el contenedor de la cámara");
-    initQuagga(); // Iniciar Quagga
-});
+    // Función para inicializar Quagga
+    function initQuagga() {
+        if (typeof Quagga === 'undefined') {
+            showToast('La biblioteca Quagga no está cargada correctamente.');
+            return;
+        }
 
-
-
-// Asegúrate de que esta función se llame cuando el DOM esté cargado
-document.addEventListener('DOMContentLoaded', () => {
-    const scannerContainer = document.getElementById('scanner-container');
-    makeElementDraggable(scannerContainer);
-});
+        Quagga.init({
+            inputStream: {
+                name: "Live",
+                type: "LiveStream",
+                target: document.querySelector('#scanner-container video'),
+                constraints: {
+                    width: 640,
+                    height: 480,
+                    facingMode: "environment"
+                }
+            },
+            decoder: {
+                readers: ["ean_reader", "code_128_reader"]
+            }
+        }, function (err) {
+            if (err) {
+                console.error("Error al iniciar Quagga:", err);
+                showToast('Error al iniciar el escáner de códigos de barras.');
+                return;
+            }
+            Quagga.start();
+        });
+    }
 
     // Iniciar escáner al hacer clic en el botón
-    
+    const scanButton = document.getElementById('scan-button');
     scanButton.addEventListener('click', () => {
         scannerContainer.style.display = 'block';
-        console.log("Mostrando el contenedor de la cámara");
         initQuagga(); // Iniciar Quagga
     });
 
@@ -352,8 +359,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            // Muestra una lista de productos con stock bajo
-            // Implementa el comportamiento para mostrar estos productos en la interfaz
+            // Mostrar productos con stock bajo en la interfaz
         });
     }
 
@@ -427,157 +433,3 @@ document.addEventListener('DOMContentLoaded', () => {
         XLSX.writeFile(workbook, 'productos.xlsx');
     }
 });
-
-/* Inicio de la integración de QuaggaJS personalizada */
-// Variables para inicialización
-let isInitialized = false;
-let isScanning = false;
-let detectionCounts = {}; // Objeto para llevar el conteo de detecciones por código
-
-const productDatabase = {
-  '7501055309474': { name: 'Coca-Cola 600ml', price: '$15.00' },
-  '7501000911288': { name: 'Sabritas Original 45g', price: '$12.50' },
-  '7501030440818': { name: 'Bimbo Pan Blanco', price: '$35.00' },
-  '7501052435626': { name: 'Leche Alpura 1L', price: '$23.50' },
-  '7501008042090': { name: 'Galletas Marías Gamesa', price: '$18.00' },
-};
-
-function showError(message) {
-  const errorElement = document.getElementById('error-message');
-  errorElement.textContent = message;
-  console.error(message);
-}
-
-function updateDebugInfo(message) {
-  const debugElement = document.getElementById('debug-info');
-  debugElement.textContent += new Date().toLocaleTimeString() + ': ' + message + '\n';
-  console.log(message);
-}
-
-function initializeScanner() {
-  updateDebugInfo('Inicializando escáner...');
-  if (typeof Quagga === 'undefined') {
-    showError('Error: La biblioteca Quagga no se ha cargado correctamente.');
-    return;
-  }
-
-Quagga.init({
-    inputStream: {
-      name: "Live",
-      type: "LiveStream",
-      target: document.querySelector("#scanner-container"),
-      constraints: {
-        width: 800,  // Resolución para mejorar rendimiento
-        height: 600, // Resolución para mejorar rendimiento
-        facingMode: "environment" // Cámara trasera
-      },
-    },
-    locator: {
-      patchSize: "large", // Tamaño de parche grande para mejorar la detección
-      halfSample: true // Usa imagen reducida para mejorar el rendimiento
-    },
-    numOfWorkers: 30, // Incrementar trabajadores para mejorar velocidad
-    decoder: {
-      readers: [
-        "ean_reader",
-        "ean_8_reader",
-        "upc_reader",
-        "code_39_reader",
-        "code_128_reader"
-      ]
-    },
-    locate: true, // Habilitar localización automática de códigos
-    frequency: 200, // Procesar 70 fotogramas por segundo
-  }, function(err) {
-    if (err) {
-      console.error("Error al iniciar Quagga:", err);
-      showError("Error al inicializar el escáner: " + err);
-      return;
-    }
-    updateDebugInfo("Quagga inicializado correctamente");
-    isInitialized = true;
-  });
-
-  Quagga.onProcessed(function(result) {
-    // Aquí solo actualizamos la UI con información de procesamiento
-    if (result) {
-      updateDebugInfo('Imagen procesada');
-    }
-  });
-
-  Quagga.onDetected(function(result) {
-    let code = result.codeResult.code;
-    let type = result.codeResult.format;
-
-    // Inicializar el conteo del código si no existe
-    if (!detectionCounts[code]) {
-      detectionCounts[code] = 0;
-    }
-    
-    // Incrementar el conteo del código detectado
-    detectionCounts[code]++;
-    document.getElementById("code").textContent = code;
-    document.getElementById("type").textContent = type;
-    updateDebugInfo("Código detectado: " + code + " (Tipo: " + type + "), Detecciones totales: " + detectionCounts[code]);
-
-    displayProductInfo(code);
-
-    // Detener después de 5 detecciones del mismo código
-    if (detectionCounts[code] >= 5) {
-      stopScanner();
-      updateDebugInfo("El escaneo se detuvo automáticamente después de 5 detecciones del código: " + code);
-      alert("El escáner ha terminado después de 5 detecciones del código: " + code);
-    }
-  });
-}
-
-function startScanner() {
-  if (!isInitialized) {
-    showError("Por favor, inicializa el escáner primero.");
-    return;
-  }
-  if (isScanning) {
-    updateDebugInfo('El escáner ya está en funcionamiento.');
-    return;
-  }
-  updateDebugInfo('Iniciando escaneo...');
-  Quagga.start();
-  isScanning = true;
-}
-
-function stopScanner() {
-  if (!isScanning) {
-    updateDebugInfo("El escáner no está en funcionamiento.");
-    return;
-  }
-  Quagga.stop();
-  isScanning = false;
-  updateDebugInfo("Escáner detenido.");
-}
-
-function displayProductInfo(code) {
-  const productInfoElement = document.getElementById('product-info');
-  if (productDatabase[code]) {
-    const product = productDatabase[code];
-    productInfoElement.innerHTML = `
-      <h3>Información del Producto</h3>
-      <p><strong>Nombre:</strong> ${product.name}</p>
-      <p><strong>Precio:</strong> ${product.price}</p>
-    `;
-  } else {
-    productInfoElement.innerHTML = `
-      <h3>Información del Producto</h3>
-      <p>No se encontró información para el código ${code}</p>
-    `;
-  }
-}
-
-window.addEventListener('load', function() {
-  if (typeof Quagga === 'undefined') {
-    showError('La biblioteca Quagga no se ha cargado correctamente. Por favor, verifica tu conexión a internet y recarga la página.');
-  } else {
-    updateDebugInfo('Página cargada correctamente, Quagga disponible.');
-  }
-});
-
-/* Fin de la integración de QuaggaJS personalizada */
