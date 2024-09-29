@@ -528,7 +528,7 @@ function initializeScanner() {
     return;
   }
 
-  Quagga.init({
+Quagga.init({
     inputStream: {
       name: "Live",
       type: "LiveStream",
@@ -646,4 +646,5 @@ window.addEventListener('load', function() {
     updateDebugInfo('Página cargada correctamente, Quagga disponible.');
   }
 });
+
 /* Fin de la integración de QuaggaJS personalizada */
