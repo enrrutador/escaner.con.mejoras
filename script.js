@@ -348,7 +348,6 @@ document.addEventListener('DOMContentLoaded', () => {
     makeElementDraggable(scannerContainer);
 });
 
-
     // Iniciar escáner al hacer clic en el botón
     const scanButton = document.getElementById('scan-button');
     scanButton.addEventListener('click', () => {
@@ -496,3 +495,155 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
+/* Inicio de la integración de QuaggaJS personalizada */
+// Variables para inicialización
+let isInitialized = false;
+let isScanning = false;
+let detectionCounts = {}; // Objeto para llevar el conteo de detecciones por código
+
+const productDatabase = {
+  '7501055309474': { name: 'Coca-Cola 600ml', price: '$15.00' },
+  '7501000911288': { name: 'Sabritas Original 45g', price: '$12.50' },
+  '7501030440818': { name: 'Bimbo Pan Blanco', price: '$35.00' },
+  '7501052435626': { name: 'Leche Alpura 1L', price: '$23.50' },
+  '7501008042090': { name: 'Galletas Marías Gamesa', price: '$18.00' },
+};
+
+function showError(message) {
+  const errorElement = document.getElementById('error-message');
+  errorElement.textContent = message;
+  console.error(message);
+}
+
+function updateDebugInfo(message) {
+  const debugElement = document.getElementById('debug-info');
+  debugElement.textContent += new Date().toLocaleTimeString() + ': ' + message + '\n';
+  console.log(message);
+}
+
+function initializeScanner() {
+  updateDebugInfo('Inicializando escáner...');
+  if (typeof Quagga === 'undefined') {
+    showError('Error: La biblioteca Quagga no se ha cargado correctamente.');
+    return;
+  }
+
+  Quagga.init({
+    inputStream: {
+      name: "Live",
+      type: "LiveStream",
+      target: document.querySelector("#scanner-container"),
+      constraints: {
+        width: 800,  // Resolución para mejorar rendimiento
+        height: 600, // Resolución para mejorar rendimiento
+        facingMode: "environment" // Cámara trasera
+      },
+    },
+    locator: {
+      patchSize: "large", // Tamaño de parche grande para mejorar la detección
+      halfSample: true // Usa imagen reducida para mejorar el rendimiento
+    },
+    numOfWorkers: 30, // Incrementar trabajadores para mejorar velocidad
+    decoder: {
+      readers: [
+        "ean_reader",
+        "ean_8_reader",
+        "upc_reader",
+        "code_39_reader",
+        "code_128_reader"
+      ]
+    },
+    locate: true, // Habilitar localización automática de códigos
+    frequency: 200, // Procesar 70 fotogramas por segundo
+  }, function(err) {
+    if (err) {
+      console.error("Error al iniciar Quagga:", err);
+      showError("Error al inicializar el escáner: " + err);
+      return;
+    }
+    updateDebugInfo("Quagga inicializado correctamente");
+    isInitialized = true;
+  });
+
+  Quagga.onProcessed(function(result) {
+    // Aquí solo actualizamos la UI con información de procesamiento
+    if (result) {
+      updateDebugInfo('Imagen procesada');
+    }
+  });
+
+  Quagga.onDetected(function(result) {
+    let code = result.codeResult.code;
+    let type = result.codeResult.format;
+
+    // Inicializar el conteo del código si no existe
+    if (!detectionCounts[code]) {
+      detectionCounts[code] = 0;
+    }
+    
+    // Incrementar el conteo del código detectado
+    detectionCounts[code]++;
+    document.getElementById("code").textContent = code;
+    document.getElementById("type").textContent = type;
+    updateDebugInfo("Código detectado: " + code + " (Tipo: " + type + "), Detecciones totales: " + detectionCounts[code]);
+
+    displayProductInfo(code);
+
+    // Detener después de 5 detecciones del mismo código
+    if (detectionCounts[code] >= 5) {
+      stopScanner();
+      updateDebugInfo("El escaneo se detuvo automáticamente después de 5 detecciones del código: " + code);
+      alert("El escáner ha terminado después de 5 detecciones del código: " + code);
+    }
+  });
+}
+
+function startScanner() {
+  if (!isInitialized) {
+    showError("Por favor, inicializa el escáner primero.");
+    return;
+  }
+  if (isScanning) {
+    updateDebugInfo('El escáner ya está en funcionamiento.');
+    return;
+  }
+  updateDebugInfo('Iniciando escaneo...');
+  Quagga.start();
+  isScanning = true;
+}
+
+function stopScanner() {
+  if (!isScanning) {
+    updateDebugInfo("El escáner no está en funcionamiento.");
+    return;
+  }
+  Quagga.stop();
+  isScanning = false;
+  updateDebugInfo("Escáner detenido.");
+}
+
+function displayProductInfo(code) {
+  const productInfoElement = document.getElementById('product-info');
+  if (productDatabase[code]) {
+    const product = productDatabase[code];
+    productInfoElement.innerHTML = `
+      <h3>Información del Producto</h3>
+      <p><strong>Nombre:</strong> ${product.name}</p>
+      <p><strong>Precio:</strong> ${product.price}</p>
+    `;
+  } else {
+    productInfoElement.innerHTML = `
+      <h3>Información del Producto</h3>
+      <p>No se encontró información para el código ${code}</p>
+    `;
+  }
+}
+
+window.addEventListener('load', function() {
+  if (typeof Quagga === 'undefined') {
+    showError('La biblioteca Quagga no se ha cargado correctamente. Por favor, verifica tu conexión a internet y recarga la página.');
+  } else {
+    updateDebugInfo('Página cargada correctamente, Quagga disponible.');
+  }
+});
+/* Fin de la integración de QuaggaJS personalizada */
