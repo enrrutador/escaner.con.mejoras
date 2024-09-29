@@ -211,82 +211,38 @@ document.addEventListener('DOMContentLoaded', async () => {
     const salePriceInput = document.getElementById('sale-price');
     const productImage = document.getElementById('product-image');
     const scannerContainer = document.getElementById('scanner-container');
-    const video = document.getElementById('video');
     const lowStockButton = document.getElementById('low-stock-button');
     const fileInput = document.getElementById('fileInput');
-    let productNotFoundAlertShown = false;
 
-    const cache = new Map();
-    const scannedBarcodes = new Set(); // Almacenar códigos ya escaneados
+    // Variables para el escáner
+    let isInitialized = false;
+    let isScanning = false;
+    let detectionCounts = {}; // Objeto para llevar el conteo de detecciones por código
 
-    // Implementación de búsqueda difusa con Fuse.js y autocompletado
-    descriptionInput.addEventListener('input', async (e) => {
-        const query = e.target.value.trim();
-        const suggestions = document.getElementById('suggestions');
-        suggestions.innerHTML = '';
-        suggestions.style.display = 'none';
-
-        if (query === '') return;
-
-        const searchResults = await db.searchProducts(query);
-
-        if (searchResults.length === 0) return;
-
-        suggestions.style.display = 'block';
-
-        searchResults.forEach((product) => {
-            const option = document.createElement('div');
-            option.textContent = product.description;
-            option.classList.add('suggestion-item');
-            option.addEventListener('click', () => {
-                populateProductFields(product);
-                suggestions.innerHTML = '';
-                suggestions.style.display = 'none';
-            });
-            suggestions.appendChild(option);
-        });
-    });
-
-    function populateProductFields(product) {
-        barcodeInput.value = product.barcode || '';
-        descriptionInput.value = product.description || '';
-        stockInput.value = product.stock || '';
-        minStockInput.value = product.minStock || '';
-        purchasePriceInput.value = product.purchasePrice || '';
-        salePriceInput.value = product.salePrice || '';
-        productImage.src = product.imageUrl || '';
-        productImage.style.display = product.imageUrl ? 'block' : 'none';
-    }
-
-    // Función para inicializar Quagga
-    const constraints = {
-        video: {
-            facingMode: { exact: "environment" } // Usar la cámara trasera
-        }
+    const productDatabase = {
+        '7501055309474': { name: 'Coca-Cola 600ml', price: '$15.00' },
+        '7501000911288': { name: 'Sabritas Original 45g', price: '$12.50' },
+        '7501030440818': { name: 'Bimbo Pan Blanco', price: '$35.00' },
+        '7501052435626': { name: 'Leche Alpura 1L', price: '$23.50' },
+        '7501008042090': { name: 'Galletas Marías Gamesa', price: '$18.00' },
     };
 
-    async function checkCameraAccess() {
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia(constraints);
-            const videoElement = document.querySelector('#scanner-container video');
-            videoElement.srcObject = stream;
-            videoElement.play();
-            console.log('Acceso a la cámara exitoso');
-            initQuagga(); // Iniciar Quagga después de obtener acceso a la cámara
-        } catch (error) {
-            console.error('Error al acceder a la cámara:', error);
-            showToast('No se puede acceder a la cámara.');
-        }
+    function showError(message) {
+        const errorElement = document.getElementById('error-message');
+        errorElement.textContent = message;
+        console.error(message);
     }
 
-    document.getElementById('scan-button').addEventListener('click', () => {
-        scannerContainer.style.display = 'block'; // Mostrar el contenedor de la cámara
-        checkCameraAccess(); // Verificar acceso a la cámara
-    });
+    function updateDebugInfo(message) {
+        const debugElement = document.getElementById('debug-info');
+        debugElement.textContent += new Date().toLocaleTimeString() + ': ' + message + '\n';
+        console.log(message);
+    }
 
-    function initQuagga() {
+    function initializeScanner() {
+        updateDebugInfo('Inicializando escáner...');
         if (typeof Quagga === 'undefined') {
-            showToast('La biblioteca Quagga no está cargada correctamente.');
+            showError('Error: La biblioteca Quagga no se ha cargado correctamente.');
             return;
         }
 
@@ -294,32 +250,126 @@ document.addEventListener('DOMContentLoaded', async () => {
             inputStream: {
                 name: "Live",
                 type: "LiveStream",
-                target: document.querySelector('#scanner-container video'),
+                target: document.querySelector("#scanner-container"),
                 constraints: {
-                    facingMode: { exact: "environment" }, // Asegúrate de usar la cámara trasera
-                    width: { ideal: 640 }, // Resolución ideal
-                    height: { ideal: 480 } // Resolución ideal
-                }
+                    width: 800,  // Resolución para mejorar rendimiento
+                    height: 600, // Resolución para mejorar rendimiento
+                    facingMode: "environment" // Cámara trasera
+                },
             },
+            locator: {
+                patchSize: "large", // Tamaño de parche grande para mejorar la detección
+                halfSample: true // Usa imagen reducida para mejorar el rendimiento
+            },
+            numOfWorkers: 30, // Incrementar trabajadores para mejorar velocidad
             decoder: {
-                readers: ["ean_reader", "code_128_reader"]
-            }
-        }, function (err) {
+                readers: [
+                    "ean_reader",
+                    "ean_8_reader",
+                    "upc_reader",
+                    "code_39_reader",
+                    "code_128_reader"
+                ]
+            },
+            locate: true, // Habilitar localización automática de códigos
+            frequency: 200, // Procesar 70 fotogramas por segundo
+        }, function(err) {
             if (err) {
                 console.error("Error al iniciar Quagga:", err);
-                showToast('Error al iniciar el escáner de códigos de barras: ' + err.message);
+                showError("Error al inicializar el escáner: " + err);
                 return;
             }
-            console.log('Quagga iniciado correctamente');
-            Quagga.start();
+            updateDebugInfo("Quagga inicializado correctamente");
+            isInitialized = true;
+            startScanner(); // Iniciar el escáner después de la inicialización
+        });
+
+        Quagga.onProcessed(function(result) {
+            // Aquí solo actualizamos la UI con información de procesamiento
+            if (result) {
+                updateDebugInfo('Imagen procesada');
+            }
+        });
+
+        Quagga.onDetected(function(result) {
+            let code = result.codeResult.code;
+            let type = result.codeResult.format;
+
+            // Inicializar el conteo del código si no existe
+            if (!detectionCounts[code]) {
+                detectionCounts[code] = 0;
+            }
+
+            // Incrementar el conteo del código detectado
+            detectionCounts[code]++;
+            document.getElementById("code").textContent = code;
+            document.getElementById("type").textContent = type;
+            updateDebugInfo("Código detectado: " + code + " (Tipo: " + type + "), Detecciones totales: " + detectionCounts[code]);
+
+            displayProductInfo(code);
+
+            // Detener después de 5 detecciones del mismo código
+            if (detectionCounts[code] >= 5) {
+                stopScanner();
+                updateDebugInfo("El escaneo se detuvo automáticamente después de 5 detecciones del código: " + code);
+                alert("El escáner ha terminado después de 5 detecciones del código: " + code);
+            }
         });
     }
+
+    function startScanner() {
+        if (!isInitialized) {
+            showError("Por favor, inicializa el escáner primero.");
+            return;
+        }
+        if (isScanning) {
+            updateDebugInfo('El escáner ya está en funcionamiento.');
+            return;
+        }
+        updateDebugInfo('Iniciando escaneo...');
+        Quagga.start();
+        isScanning = true;
+    }
+
+    function stopScanner() {
+        if (!isScanning) {
+            updateDebugInfo("El escáner no está en funcionamiento.");
+            return;
+        }
+        Quagga.stop();
+        isScanning = false;
+        updateDebugInfo("Escáner detenido.");
+    }
+
+    function displayProductInfo(code) {
+        const productInfoElement = document.getElementById('product-info');
+        if (productDatabase[code]) {
+            const product = productDatabase[code];
+            productInfoElement.innerHTML = `
+              <h3>Información del Producto</h3>
+              <p><strong>Nombre:</strong> ${product.name}</p>
+              <p><strong>Precio:</strong> ${product.price}</p>
+            `;
+        } else {
+            productInfoElement.innerHTML = `
+              <h3>Información del Producto</h3>
+              <p>No se encontró información para el código ${code}</p>
+            `;
+        }
+    }
+
+    // Iniciar escáner al hacer clic en el botón
+    const scanButton = document.getElementById('scan-button');
+    scanButton.addEventListener('click', () => {
+        scannerContainer.style.display = 'block'; // Mostrar el contenedor de la cámara
+        initializeScanner(); // Inicializar el escáner
+    });
 
     // Detener el escáner
     const stopScannerButton = document.getElementById('stop-scanner');
     stopScannerButton.addEventListener('click', () => {
         scannerContainer.style.display = 'none';
-        Quagga.stop(); // Detener el escáner de Quagga
+        stopScanner(); // Detener el escáner de Quagga
     });
 
     // Guardar producto
@@ -450,5 +500,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         const workbook = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(workbook, worksheet, 'Productos');
         XLSX.writeFile(workbook, 'productos.xlsx');
+    }
+});
+
+// Verificar si Quagga está disponible
+window.addEventListener('load', function() {
+    if (typeof Quagga === 'undefined') {
+        showError('La biblioteca Quagga no se ha cargado correctamente. Por favor, verifica tu conexión a internet y recarga la página.');
+    } else {
+        updateDebugInfo('Página cargada correctamente, Quagga disponible.');
     }
 });
