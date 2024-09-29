@@ -263,45 +263,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         productImage.style.display = product.imageUrl ? 'block' : 'none';
     }
 
-    // Inicializar Quagga
- function initQuagga() {
-    if (navigator.mediaDevices && typeof navigator.mediaDevices.getUserMedia === 'function') {
-        Quagga.init({
-            inputStream: {
-                name: "Live",
-                type: "LiveStream",
-                target: document.querySelector('#scanner-container video'), // Asegúrate de que el video esté dentro del contenedor
-                constraints: {
-                    width: 640,
-                    height: 480,
-                    facingMode: "environment"
-                },
-            },
-            decoder: {
-                readers: [
-                    "ean_reader",
-                    "code_128_reader"
-                ]
-            },
-        }, function(err) {
-            if (err) {
-                console.error("Error al iniciar Quagga:", err);
-                showToast("Error al iniciar el escáner de códigos de barras.");
-                return;
-            }
-            console.log("Quagga iniciado correctamente");
-            Quagga.start();
-        });
-
-        Quagga.onDetected((result) => {
-            // ... (código de detección existente)
-        });
-    } else {
-        console.error("getUserMedia no está soportado en este navegador");
-        showToast("La cámara no está disponible en este dispositivo.");
-    }
-}
-
+   
 // Modificar el evento del botón de escaneo
 const scanButton = document.getElementById('scan-button');
 scanButton.addEventListener('click', () => {
@@ -311,36 +273,7 @@ scanButton.addEventListener('click', () => {
     initQuagga(); // Iniciar Quagga
 });
 
-// Modificar la función para hacer el contenedor arrastrable
-function makeElementDraggable(element) {
-    let isDragging = false;
-    let startX, startY;
 
-    element.addEventListener('mousedown', (e) => {
-        isDragging = true;
-        startX = e.clientX - element.offsetLeft;
-        startY = e.clientY - element.offsetTop;
-        element.style.cursor = 'grabbing';
-    });
-
-    document.addEventListener('mousemove', (e) => {
-        if (!isDragging) return;
-        let newX = e.clientX - startX;
-        let newY = e.clientY - startY;
-        
-        // Limitar el movimiento dentro de la ventana
-        newX = Math.max(0, Math.min(newX, window.innerWidth - element.offsetWidth));
-        newY = Math.max(0, Math.min(newY, window.innerHeight - element.offsetHeight));
-        
-        element.style.left = `${newX}px`;
-        element.style.top = `${newY}px`;
-    });
-
-    document.addEventListener('mouseup', () => {
-        isDragging = false;
-        element.style.cursor = 'grab';
-    });
-}
 
 // Asegúrate de que esta función se llame cuando el DOM esté cargado
 document.addEventListener('DOMContentLoaded', () => {
