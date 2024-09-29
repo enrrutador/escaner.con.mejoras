@@ -259,6 +259,30 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // Función para inicializar Quagga
+const constraints = {
+    video: {
+        facingMode: "environment" // Usar la cámara trasera
+    }
+};
+
+async function checkCameraAccess() {
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia(constraints);
+        const videoElement = document.querySelector('#scanner-container video');
+        videoElement.srcObject = stream;
+        videoElement.play();
+        console.log('Acceso a la cámara exitoso');
+        initQuagga(); // Iniciar Quagga después de obtener acceso a la cámara
+    } catch (error) {
+        console.error('Error al acceder a la cámara:', error);
+        showToast('No se puede acceder a la cámara.');
+    }
+}
+
+document.getElementById('scan-button').addEventListener('click', () => {
+    checkCameraAccess(); // Verificar acceso a la cámara
+});
+
 function initQuagga() {
     if (typeof Quagga === 'undefined') {
         showToast('La biblioteca Quagga no está cargada correctamente.');
@@ -271,7 +295,7 @@ function initQuagga() {
             type: "LiveStream",
             target: document.querySelector('#scanner-container video'),
             constraints: {
-                facingMode: { exact: "environment" }, // Asegúrate de usar la cámara trasera
+                facingMode: "environment", // Indica que se desea usar la cámara trasera
                 width: { ideal: 640 }, // Resolución ideal
                 height: { ideal: 480 } // Resolución ideal
             }
@@ -282,13 +306,14 @@ function initQuagga() {
     }, function (err) {
         if (err) {
             console.error("Error al iniciar Quagga:", err);
-            showToast('Error al iniciar el escáner de códigos de barras.');
+            showToast('Error al iniciar el escáner de códigos de barras: ' + err.message);
             return;
         }
         console.log('Quagga iniciado correctamente');
         Quagga.start();
     });
 }
+
 
 
     // Iniciar escáner al hacer clic en el botón
