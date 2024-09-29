@@ -349,7 +349,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
     // Iniciar escáner al hacer clic en el botón
-    const scanButton = document.getElementById('scan-button');
+    
     scanButton.addEventListener('click', () => {
         scannerContainer.style.display = 'block';
         console.log("Mostrando el contenedor de la cámara");
