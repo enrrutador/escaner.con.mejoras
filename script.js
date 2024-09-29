@@ -271,9 +271,9 @@ function initQuagga() {
             type: "LiveStream",
             target: document.querySelector('#scanner-container video'),
             constraints: {
-                width: 640,
-                height: 480,
-                facingMode: "environment" // Cámara trasera
+                facingMode: { exact: "environment" }, // Asegúrate de usar la cámara trasera
+                width: { ideal: 640 }, // Resolución ideal
+                height: { ideal: 480 } // Resolución ideal
             }
         },
         decoder: {
@@ -285,6 +285,7 @@ function initQuagga() {
             showToast('Error al iniciar el escáner de códigos de barras.');
             return;
         }
+        console.log('Quagga iniciado correctamente');
         Quagga.start();
     });
 }
