@@ -434,3 +434,19 @@ function initQuagga() {
         XLSX.writeFile(workbook, 'productos.xlsx');
     }
 });
+async function checkCameraAccess() {
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        const videoElement = document.querySelector('#scanner-container video');
+        videoElement.srcObject = stream;
+        videoElement.play();
+        console.log('Acceso a la cámara exitoso');
+    } catch (error) {
+        console.error('Error al acceder a la cámara:', error);
+        showToast('No se puede acceder a la cámara.');
+    }
+}
+
+document.getElementById('scan-button').addEventListener('click', () => {
+    checkCameraAccess();  // Prueba el acceso a la cámara manualmente
+});
