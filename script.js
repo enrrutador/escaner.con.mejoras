@@ -259,35 +259,36 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // Función para inicializar Quagga
-    function initQuagga() {
-        if (typeof Quagga === 'undefined') {
-            showToast('La biblioteca Quagga no está cargada correctamente.');
+function initQuagga() {
+    if (typeof Quagga === 'undefined') {
+        showToast('La biblioteca Quagga no está cargada correctamente.');
+        return;
+    }
+
+    Quagga.init({
+        inputStream: {
+            name: "Live",
+            type: "LiveStream",
+            target: document.querySelector('#scanner-container video'),
+            constraints: {
+                width: 640,
+                height: 480,
+                facingMode: "environment" // Cámara trasera
+            }
+        },
+        decoder: {
+            readers: ["ean_reader", "code_128_reader"]
+        }
+    }, function (err) {
+        if (err) {
+            console.error("Error al iniciar Quagga:", err);
+            showToast('Error al iniciar el escáner de códigos de barras.');
             return;
         }
+        Quagga.start();
+    });
+}
 
-        Quagga.init({
-            inputStream: {
-                name: "Live",
-                type: "LiveStream",
-                target: document.querySelector('#scanner-container video'),
-                constraints: {
-                    width: 640,
-                    height: 480,
-                    facingMode: "environment"
-                }
-            },
-            decoder: {
-                readers: ["ean_reader", "code_128_reader"]
-            }
-        }, function (err) {
-            if (err) {
-                console.error("Error al iniciar Quagga:", err);
-                showToast('Error al iniciar el escáner de códigos de barras.');
-                return;
-            }
-            Quagga.start();
-        });
-    }
 
     // Iniciar escáner al hacer clic en el botón
     const scanButton = document.getElementById('scan-button');
