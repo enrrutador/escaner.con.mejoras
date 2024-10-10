@@ -5,135 +5,92 @@
   Para obtener permiso para usar cualquier parte de este código, por favor contacta a [https://sysmarket-hm.web.app/].
 */
 
+/* Variables de colores */
 :root {
     --primary-color: #0288D1;
     --secondary-color: #0277BD;
     --accent-color: #FF5722;
     --text-color: #FFFFFF;
-    --background-color: rgba(236, 239, 241, 0.8); /* Fondo más transparente */
+    --background-color: rgba(236, 239, 241, 0.9); /* Fondo más transparente */
+    --toast-width: 300px;
 }
 
-/* Añadir estilos de Bootstrap, Tailwind CSS, Animate.css, Materialize y Sass */
-@import url('https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css');
-@import url('https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css');
-@import url('https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css');
-@import url('https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css');
-
+/* Estilos básicos */
 body, html {
     margin: 0;
     padding: 0;
-    font-family: Arial, sans-serif;
-    background-image: url('https://enrrutador.github.io/M-Escaner/image/1.jpg');
+    font-family: 'Roboto', sans-serif; /* Fuente más moderna */
+    background: url('https://enrrutador.github.io/M-Escaner/image/1.jpg') no-repeat center center fixed;
     background-size: cover;
-    background-repeat: no-repeat;
-    background-attachment: fixed;
-    background-position: center;
     color: var(--text-color);
-    height: 100%;
     display: flex;
     justify-content: center;
     align-items: center;
+    height: 100vh;
 }
 
+/* Contenedor principal */
 .container, .login-container {
-    width: 90%;
-    max-width: 400px;
-    margin: auto;
+    background-color: var(--background-color);
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
     padding: 20px;
     text-align: center;
-    background-color: var(--background-color); /* Fondo semitransparente */
-    border-radius: 10px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    width: 90%;
+    max-width: 400px;
+    transition: transform 0.3s;
 }
 
+.container:hover {
+    transform: translateY(-5px); /* Efecto de elevación */
+}
+
+/* Encabezado */
 header h1 {
-    font-size: 1.5em;
+    font-size: 2em;
     margin-bottom: 20px;
     color: var(--primary-color);
+    animation: fadeIn 1s; /* Animación al aparecer */
 }
 
+/* Secciones */
 .scanner-section, .form-section, .action-section {
     margin-bottom: 20px;
 }
 
+/* Botones */
 .action-button {
     background-color: var(--primary-color);
     border: none;
     color: white;
-    padding: 12px 15px;
+    padding: 12px;
     margin: 5px 0;
     cursor: pointer;
     border-radius: 5px;
-    transition: background-color 0.3s ease;
+    transition: background-color 0.3s, transform 0.3s; /* Transiciones mejoradas */
     width: 100%;
     font-size: 1em;
 }
 
 .action-button:hover {
     background-color: var(--accent-color);
+    transform: translateY(-2px); /* Efecto al pasar el mouse */
 }
 
-/* Estilos individualizados para los campos de entrada */
-
-/* Campo de Código de Barras */
-#barcode {
-    width: 93%; /* Ajusta el tamaño del campo */
-    padding: 10px;
-    margin: 10px auto; /* Centrado horizontal */
-    display: block;
-    font-size: 1.1em; /* Tamaño de la fuente ajustado */
-}
-
-/* Campo de Descripción del Producto */
-#description {
-    width: 93%; /* Ocupa todo el ancho disponible */
-    padding: 12px; /* Aumenta el espacio interno */
-    margin: 10px auto; /* Centrado horizontal */
-    display: block;
-    font-size: 1.2em; /* Aumenta el tamaño del texto */
-}
-
-/* Campo de Stock Actual */
-#stock {
-    width: 40%; /* Ancho del 45% del contenedor */
-    padding: 12px;
-    margin: 1px auto;
-    display: block;
-    float: left; /* Alineado a la izquierda */
-}
-
-/* Campo de Stock Mínimo */
-#min-stock {
-    width: 40%; /* Ancho del 45% del contenedor */
-    padding: 12px;
-    margin: 1px auto;
-    float: right; /* Alineado a la derecha */
-    display: block;
-}
-
-/* Campo de Precio de Compra */
-#purchase-price {
-    width: 40%; /* Centrado y más grande */
-    padding: 12px;
-    margin: 10px auto;
-    display: block;
-    float: left;
-}
-
-/* Campo de Precio de Venta */
-#sale-price {
-    width: 40%; /* Centrado y más grande */
-    padding: 12px;
-    margin: 10px auto;
-    display: block;
-    float: right; /* Alineado a la derecha */
-}
-
-/* Otros estilos generales para inputs */
+/* Estilos para los campos de entrada */
 input {
-    border-radius: 9px;
+    width: calc(100% - 24px);
+    padding: 12px;
+    margin: 10px 0;
     border: 1px solid var(--secondary-color);
+    border-radius: 5px;
     font-size: 1em;
+    transition: border-color 0.3s;
+}
+
+input:focus {
+    border-color: var(--accent-color);
+    outline: none;
 }
 
 /* Estilos para la imagen del producto */
@@ -143,174 +100,41 @@ input {
     border-radius: 5px;
 }
 
-.scanner-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.8);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-}
-
-#video {
-    width: 80%;
-    border: 2px solid var(--primary-color);
-    border-radius: 10px;
-}
-
-#viewfinder {
-    position: absolute;
-    width: 60%;
-    height: 40%;
-    border: 2px solid var(--accent-color);
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    border-radius: 10px;
-}
-
-.results-section {
-    margin-top: 20px;
-    text-align: left;
-}
-
-.results-section h2 {
-    color: var(--primary-color);
-}
-
-.results-section ul {
-    list-style-type: none;
-    padding-left: 0;
-}
-
-.results-section li {
-    background-color: var(--background-color);
-    padding: 10px;
-    border-bottom: 1px solid var(--secondary-color);
-    border-radius: 5px;
-    margin-bottom: 5px;
-}
-
-.results-section li:hover {
-    background-color: var(--accent-color);
-    color: var(--text-color);
-    cursor: pointer;
-}
-
-.low-stock-button {
-    background-color: red;
-}
-
-.low-stock-results ul {
-    color: #000;
-}
-
-.low-stock-results li {
-    color: #000;
-}
-
-.login-container h2 {
-    color: var(--primary-color);
-    margin-bottom: 20px;
-}
-
-.error-message {
-    color: red;
-    font-size: 0.9em;
-    margin-top: 10px;
-}
-
-/* Botón de flecha para volver al escáner */
-.back-button {
-    background-color: var(--primary-color);
-    border: none;
-    color: white;
-    font-size: 1.5em;
-    padding: 10px;
-    margin: 10px;
-    cursor: pointer;
-    border-radius: 50%;
-    display: inline-block;
-}
-
-.back-button:hover {
-    background-color: var(--accent-color);
-}
-
-/* Estilos individualizados para el campo de email */
-#email {
-    width: 90%; /* Ancho completo */
-    padding: 12px; /* Espacio interno */
-    margin: 10px 0; /* Espacio entre el campo y otros elementos */
-    border: 2px solid #0288D1; /* Borde de color */
-    border-radius: 5px; /* Bordes redondeados */
-    font-size: 1em; /* Tamaño de la fuente */
-    background-color: #f9f9f9; /* Fondo del campo */
-    color: #333; /* Color del texto */
-}
-
-/* Estilos individualizados para el campo de contraseña */
-#password {
-    width: 90%; /* Ancho completo */
-    padding: 12px;
-    margin: 10px 0;
-    border: 2px solid #0288D1;
-    border-radius: 5px;
-    font-size: 1em;
-    background-color: #f9f9f9;
-    color: #333;
-}
-
-/* Opcional: Cambiar color del borde al hacer foco en los campos */
-#email:focus, #password:focus {
-    border-color: #FF5722; /* Cambia el color del borde al hacer foco */
-    outline: none; /* Eliminar el borde por defecto del navegador */
-}
-
-/* Estilos para los mensajes */
-
-:root {
-    --toast-width: 300px; /* Ancho por defecto del contenedor de mensajes */
-    --toast-font-size: 2em; /* Tamaño de fuente por defecto */
-    --toast-padding: 80px 20px; /* Espacio interno por defecto */
-    --toast-font-family: 'Arial, sans-serif'; /* Fuente por defecto */
-}
-
+/* Mensajes emergentes */
 .toast {
     position: fixed;
-    top: 50%; /* Centrado verticalmente */
-    left: 50%; /* Centrado horizontalmente */
-    transform: translate(-50%, -50%); /* Ajuste para centrar exactamente */
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
     background-color: var(--accent-color);
-    font-weight: bold; /* Texto en negrita */
-    text-align: center; /* Texto centrado */
-    border-radius: 5px; /* Bordes redondeados */
-    z-index: 1000; /* Apilar sobre otros elementos */
-    width: var(--toast-width);
-    font-size: var(--toast-font-size);
-    padding: var(--toast-padding);
     color: var(--text-color);
-    animation: fadein 0.5s, fadeout 0.5s 3.5s; /* Animación de entrada y salida */
+    width: var(--toast-width);
+    padding: 15px;
+    border-radius: 5px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.5s ease, visibility 0.5s ease;
+    animation: fadeIn 0.5s forwards;
 }
 
-@keyframes fadein {
-    from {
-        opacity: 0;
-    }
-    to {
-        opacity: 1;
-    }
+.toast.show {
+    opacity: 1;
+    visibility: visible;
 }
 
-@keyframes fadeout {
-    from {
-        opacity: 1;
+/* Animaciones */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* Diseño responsive */
+@media (max-width: 600px) {
+    header h1 {
+        font-size: 1.5em; /* Ajustar tamaño del encabezado */
     }
-    to {
-        opacity: 0;
+    .action-button {
+        font-size: 0.9em; /* Ajustar tamaño de botones */
     }
 }
